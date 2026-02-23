@@ -1,0 +1,35 @@
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+.eggs/
+
+# Virtual environment
+venv/
+.venv/
+env/
+
+# Environment variables
+.env
+.env.*
+
+# Jupyter checkpoints
+.ipynb_checkpoints/
+
+# Large data files (raw TFRecords and processed numpy)
+data/raw/
+data/processed/*.npz
+
+# Saved model weights (large binaries)
+saved_models/
+
+# Results / generated figures (can be regenerated)
+results/figures/
+results/*.json
+results/*.txt
+
+# OS files
+.DS_Store
+Thumbs.db
