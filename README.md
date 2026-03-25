@@ -361,35 +361,87 @@ The PI-CCA combines:
 
 ## References
 
-1. **Huot, F. et al.** (2022). *Next Day Wildfire Spread: A Machine Learning Dataset to Predict Wildfire Spreading from Remote-Sensing Data*. IEEE Transactions on Geoscience and Remote Sensing, 60, 1-13.
+### Dataset and Data Sources
 
-2. **Rothermel, R.C.** (1972). *A Mathematical Model for Predicting Fire Spread in Wildland Fuels*. USDA Forest Service Research Paper INT-115.
+1. **Huot, F. et al.** (2022). *Next Day Wildfire Spread: A Machine Learning Dataset to Predict Wildfire Spreading from Remote-Sensing Data*. IEEE Transactions on Geoscience and Remote Sensing, 60, 1-13. [doi:10.1109/TGRS.2022.3192974](https://doi.org/10.1109/TGRS.2022.3192974)
 
-3. **Alexandridis, A. et al.** (2008). *A cellular automata model for forest fire spreading prediction*. Applied Mathematics and Computation, 204(1), 191-201.
+2. **Abatzoglou, J.T.** (2013). *Development of gridded surface meteorological data for ecological applications and modelling*. International Journal of Climatology, 33(1), 121-131. [doi:10.1002/joc.3413](https://doi.org/10.1002/joc.3413)
 
-4. **Shi, X. et al.** (2015). *Convolutional LSTM Network: A Machine Learning Approach for Precipitation Nowcasting*. NeurIPS.
+3. **Farr, T.G. et al.** (2007). *The Shuttle Radar Topography Mission*. Reviews of Geophysics, 45(2). [doi:10.1029/2005RG000183](https://doi.org/10.1029/2005RG000183)
 
-5. **Ronneberger, O. et al.** (2015). *U-Net: Convolutional Networks for Biomedical Image Segmentation*. MICCAI.
+4. **Tucker, C.J.** (1979). *Red and photographic infrared linear combinations for monitoring vegetation*. Remote Sensing of Environment, 8(2), 127-150. [doi:10.1016/0034-4257(79)90013-0](https://doi.org/10.1016/0034-4257(79)90013-0)
 
-6. **Oktay, O. et al.** (2018). *Attention U-Net: Learning Where to Look for the Pancreas*. MIDL.
+5. **Roberts, D.R. et al.** (2017). *Cross-validation strategies for data with temporal, spatial, hierarchical, or phylogenetic structure*. Ecography, 40(8), 913-929. [doi:10.1111/ecog.02881](https://doi.org/10.1111/ecog.02881)
 
-7. **Raissi, M. et al.** (2019). *Physics-Informed Neural Networks*. Journal of Computational Physics, 378, 686-707.
+### Physics-Based Fire Modeling
 
-8. **Lundberg, S.M. & Lee, S.-I.** (2017). *A Unified Approach to Interpreting Model Predictions*. NeurIPS.
+6. **Rothermel, R.C.** (1972). *A Mathematical Model for Predicting Fire Spread in Wildland Fuels*. USDA Forest Service Research Paper INT-115.
 
-9. **Selvaraju, R.R. et al.** (2017). *Grad-CAM: Visual Explanations from Deep Networks*. ICCV.
+7. **Alexandridis, A. et al.** (2008). *A cellular automata model for forest fire spreading prediction*. Applied Mathematics and Computation, 204(1), 191-201. [doi:10.1016/j.amc.2008.05.132](https://doi.org/10.1016/j.amc.2008.05.132)
 
-10. **Abatzoglou, J.T.** (2013). *Development of gridded surface meteorological data for ecological applications and modelling*. International Journal of Climatology, 33(1), 121-131.
+8. **Finney, M.A.** (1998). *FARSITE: Fire Area Simulator—model development and evaluation*. USDA Forest Service Research Paper RMRS-RP-4.
 
-11. **Farr, T.G. et al.** (2007). *The Shuttle Radar Topography Mission*. Reviews of Geophysics, 45(2).
+### Deep Learning Architectures
 
-12. **Gal, Y. & Ghahramani, Z.** (2016). *Dropout as a Bayesian Approximation: Representing Model Uncertainty in Deep Learning*. ICML.
+9. **Shi, X. et al.** (2015). *Convolutional LSTM Network: A Machine Learning Approach for Precipitation Nowcasting*. NeurIPS 2015, 802-810.
 
-13. **Karniadakis, G.E. et al.** (2021). *Physics-informed machine learning*. Nature Reviews Physics, 3, 422-440.
+10. **Ronneberger, O. et al.** (2015). *U-Net: Convolutional Networks for Biomedical Image Segmentation*. MICCAI 2015, 234-241. [doi:10.1007/978-3-319-24574-4_28](https://doi.org/10.1007/978-3-319-24574-4_28)
 
-14. **Jain, P. et al.** (2020). *A review of machine learning applications in wildfire science and management*. Environmental Reviews, 28(4), 478-505.
+11. **Oktay, O. et al.** (2018). *Attention U-Net: Learning Where to Look for the Pancreas*. MIDL 2018.
 
-15. **Radke, D. et al.** (2019). *FireCast: Leveraging Deep Learning to Predict Wildfire Spread*. IJCAI.
+12. **He, K. et al.** (2016). *Deep Residual Learning for Image Recognition*. CVPR 2016, 770-778. [doi:10.1109/CVPR.2016.90](https://doi.org/10.1109/CVPR.2016.90)
+
+13. **Hu, J. et al.** (2018). *Squeeze-and-Excitation Networks*. CVPR 2018, 7132-7141. [doi:10.1109/CVPR.2018.00745](https://doi.org/10.1109/CVPR.2018.00745)
+
+### Physics-Informed Machine Learning
+
+14. **Raissi, M. et al.** (2019). *Physics-Informed Neural Networks: A Deep Learning Framework for Solving Forward and Inverse Problems Involving Nonlinear Partial Differential Equations*. Journal of Computational Physics, 378, 686-707. [doi:10.1016/j.jcp.2018.10.045](https://doi.org/10.1016/j.jcp.2018.10.045)
+
+15. **Karniadakis, G.E. et al.** (2021). *Physics-informed machine learning*. Nature Reviews Physics, 3, 422-440. [doi:10.1038/s42254-021-00314-5](https://doi.org/10.1038/s42254-021-00314-5)
+
+16. **Karpatne, A. et al.** (2017). *Theory-Guided Data Science: A New Paradigm for Scientific Discovery from Data*. IEEE Transactions on Knowledge and Data Engineering, 29(10), 2318-2331. [doi:10.1109/TKDE.2017.2720168](https://doi.org/10.1109/TKDE.2017.2720168)
+
+### Training Methodology
+
+17. **Lin, T.-Y. et al.** (2017). *Focal Loss for Dense Object Detection*. ICCV 2017, 2980-2988. [doi:10.1109/ICCV.2017.324](https://doi.org/10.1109/ICCV.2017.324)
+
+18. **Milletari, F. et al.** (2016). *V-Net: Fully Convolutional Neural Networks for Volumetric Medical Image Segmentation*. 3DV 2016, 565-571. [doi:10.1109/3DV.2016.79](https://doi.org/10.1109/3DV.2016.79)
+
+19. **Loshchilov, I. & Hutter, F.** (2019). *Decoupled Weight Decay Regularization*. ICLR 2019.
+
+20. **Ioffe, S. & Szegedy, C.** (2015). *Batch Normalization: Accelerating Deep Network Training by Reducing Internal Covariate Shift*. ICML 2015, 448-456.
+
+21. **Shorten, C. & Khoshgoftaar, T.M.** (2019). *A survey on Image Data Augmentation for Deep Learning*. Journal of Big Data, 6(1), 60. [doi:10.1186/s40537-019-0197-0](https://doi.org/10.1186/s40537-019-0197-0)
+
+### Evaluation Metrics
+
+22. **Dice, L.R.** (1945). *Measures of the Amount of Ecologic Association Between Species*. Ecology, 26(3), 297-302. [doi:10.2307/1932409](https://doi.org/10.2307/1932409)
+
+23. **Jaccard, P.** (1912). *The distribution of the flora in the alpine zone*. New Phytologist, 11(2), 37-50. [doi:10.1111/j.1469-8137.1912.tb05611.x](https://doi.org/10.1111/j.1469-8137.1912.tb05611.x)
+
+24. **Fawcett, T.** (2006). *An introduction to ROC analysis*. Pattern Recognition Letters, 27(8), 861-874. [doi:10.1016/j.patrec.2005.10.010](https://doi.org/10.1016/j.patrec.2005.10.010)
+
+25. **Davis, J. & Goadrich, M.** (2006). *The relationship between Precision-Recall and ROC curves*. ICML 2006, 233-240. [doi:10.1145/1143844.1143874](https://doi.org/10.1145/1143844.1143874)
+
+### Explainability and Interpretability
+
+26. **Lundberg, S.M. & Lee, S.-I.** (2017). *A Unified Approach to Interpreting Model Predictions*. NeurIPS 2017, 4765-4774.
+
+27. **Selvaraju, R.R. et al.** (2017). *Grad-CAM: Visual Explanations from Deep Networks via Gradient-based Localization*. ICCV 2017, 618-626. [doi:10.1109/ICCV.2017.74](https://doi.org/10.1109/ICCV.2017.74)
+
+28. **Gal, Y. & Ghahramani, Z.** (2016). *Dropout as a Bayesian Approximation: Representing Model Uncertainty in Deep Learning*. ICML 2016, 1050-1059.
+
+29. **Molnar, C.** (2020). *Interpretable Machine Learning: A Guide for Making Black Box Models Explainable*. [christophm.github.io/interpretable-ml-book](https://christophm.github.io/interpretable-ml-book/)
+
+30. **Samek, W. et al.** (2021). *Explaining Deep Neural Networks and Beyond: A Review of Methods and Applications*. Proceedings of the IEEE, 109(3), 247-278. [doi:10.1109/JPROC.2021.3060483](https://doi.org/10.1109/JPROC.2021.3060483)
+
+### Wildfire Machine Learning Applications
+
+31. **Jain, P. et al.** (2020). *A review of machine learning applications in wildfire science and management*. Environmental Reviews, 28(4), 478-505. [doi:10.1139/er-2020-0019](https://doi.org/10.1139/er-2020-0019)
+
+32. **Radke, D. et al.** (2019). *FireCast: Leveraging Deep Learning to Predict Wildfire Spread*. IJCAI 2019, 4575-4581. [doi:10.24963/ijcai.2019/636](https://doi.org/10.24963/ijcai.2019/636)
+
+33. **Ganapathi Subramanian, S. & Crowley, M.** (2018). *Using Spatial Reinforcement Learning to Build Forest Wildfire Dynamics Models From Satellite Images*. Frontiers in ICT, 5, 6. [doi:10.3389/fict.2018.00006](https://doi.org/10.3389/fict.2018.00006)
 
 ---
 
