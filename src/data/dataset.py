@@ -72,8 +72,17 @@ class FireSpreadDataset(Dataset):
         split_file = self.processed_dir / f"{split}.npz"
         if split_file.exists():
             data = np.load(split_file)
-            self.inputs = data["inputs"]    # (N, C, H, W) float32
-            self.targets = data["targets"]  # (N, 1, H, W) float32
+            if "inputs" in data and "targets" in data:
+                self.inputs = data["inputs"]    # (N, C, H, W) float32
+                self.targets = data["targets"]  # (N, 1, H, W) float32
+            elif "X" in data and "Y" in data:
+                self.inputs = data["X"]         # legacy key
+                self.targets = data["Y"]        # legacy key
+            else:
+                raise KeyError(
+                    f"Unexpected keys in {split_file.name}: {list(data.keys())}. "
+                    "Expected ('inputs','targets') or ('X','Y')."
+                )
             self.indices = np.arange(len(self.inputs))
             return
 
@@ -144,6 +153,7 @@ def get_dataloaders(
     num_workers: int = 0,
     augment_train: bool = True,
     seed: int = 42,
+    stats: dict | None = None,
 ) -> dict:
     """Create train / val / test DataLoaders.
 
@@ -157,6 +167,7 @@ def get_dataloaders(
             processed_dir, split=split,
             augment=(augment_train and split == "train"),
             seed=seed,
+            stats=stats,
         )
         loaders[split] = DataLoader(
             ds,

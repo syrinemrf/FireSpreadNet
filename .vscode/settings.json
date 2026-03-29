@@ -1,0 +1,12 @@
+{
+  "python.defaultInterpreterPath": "${workspaceFolder}/venv311/Scripts/python.exe",
+  "python.terminal.activateEnvironment": true,
+  "jupyter.jupyterServerType": "local",
+  "jupyter.kernels.excludePythonEnvironments": [
+    "C:/Users/Syrin/OneDrive/Bureau/FireForest/venv/Scripts/python.exe",
+    "C:/Users/Syrin/OneDrive/Bureau/FireForest/venv"
+  ],
+  "jupyter.kernels.trusted": [
+    "fireforest-gpu311"
+  ]
+}
