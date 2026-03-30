@@ -1,0 +1,109 @@
+{
+  "PROCESSED_DIR": "C:\\Users\\Syrin\\OneDrive\\Bureau\\FireForest\\data\\processed",
+  "FIGURES_DIR": "C:\\Users\\Syrin\\OneDrive\\Bureau\\FireForest\\results\\figures",
+  "MODELS_DIR": "C:\\Users\\Syrin\\OneDrive\\Bureau\\FireForest\\saved_models",
+  "RAW_DATA_DIR": "C:\\Users\\Syrin\\OneDrive\\Bureau\\FireForest\\data\\raw\\ml_tracks\\a.fire_danger",
+  "GRID_SIZE": 64,
+  "CELL_SIZE_KM": 1.0,
+  "TIMESTEP_H": 24,
+  "FEATURE_CHANNELS": [
+    "elevation",
+    "wind_speed",
+    "wind_direction",
+    "min_temp",
+    "max_temp",
+    "humidity",
+    "precipitation",
+    "drought_index",
+    "ndvi",
+    "erc",
+    "population",
+    "prev_fire_mask"
+  ],
+  "N_INPUT_CHANNELS": 12,
+  "CH": {
+    "elevation": 0,
+    "wind_speed": 1,
+    "wind_direction": 2,
+    "min_temp": 3,
+    "max_temp": 4,
+    "humidity": 5,
+    "precipitation": 6,
+    "drought_index": 7,
+    "ndvi": 8,
+    "erc": 9,
+    "population": 10,
+    "prev_fire_mask": 11
+  },
+  "TFRECORD_INPUT_KEYS": [
+    "elevation",
+    "th",
+    "vs",
+    "tmmn",
+    "tmmx",
+    "sph",
+    "pr",
+    "PDSI",
+    "NDVI",
+    "ERC",
+    "population",
+    "PrevFireMask"
+  ],
+  "TFRECORD_TARGET_KEY": "FireMask",
+  "norm_stats": {
+    "elevation": {
+      "mean": 896.5713199977364,
+      "std": 842.610351074606
+    },
+    "wind_speed": {
+      "mean": 146.64650808987273,
+      "std": 3435.083852641213
+    },
+    "wind_direction": {
+      "mean": 3.627848380183343,
+      "std": 1.3092153111018678
+    },
+    "min_temp": {
+      "mean": 281.85211036454183,
+      "std": 18.497168993023934
+    },
+    "max_temp": {
+      "mean": 297.7166431601455,
+      "std": 19.458073039244873
+    },
+    "humidity": {
+      "mean": 0.0065263197898756216,
+      "std": 0.00373554480518734
+    },
+    "precipitation": {
+      "mean": 0.3234283996268729,
+      "std": 1.5336640555095387
+    },
+    "drought_index": {
+      "mean": -0.7728707425993339,
+      "std": 2.4407190816699496
+    },
+    "ndvi": {
+      "mean": 5350.680987611171,
+      "std": 2185.2185657409937
+    },
+    "erc": {
+      "mean": 53.46910342995682,
+      "std": 25.09798449022816
+    },
+    "population": {
+      "mean": 30.46033032085942,
+      "std": 214.2000509591865
+    },
+    "prev_fire_mask": {
+      "mean": -0.0027228549657019826,
+      "std": 0.13831192558360622
+    }
+  },
+  "split_samples": {
+    "train": 14979,
+    "val": 1877,
+    "test": 1689
+  },
+  "tfrecord_backend": "tfrecord"
+}
