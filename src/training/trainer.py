@@ -20,6 +20,7 @@ from torch.utils.data import DataLoader
 from pathlib import Path
 from typing import Dict, Optional
 from tqdm import tqdm
+from sklearn.metrics import precision_recall_curve, auc
 
 from config import TRAIN_CONFIG, MODELS_DIR
 
@@ -86,12 +87,12 @@ def compute_metrics(pred: torch.Tensor, target: torch.Tensor, threshold: float =
 
     Parameters
     ----------
-    pred   : (B, 1, H, W) float — predicted probabilities
+    pred   : (B, 1, H, W) float — predicted probabilities [0, 1]
     target : (B, 1, H, W) float — binary ground truth
 
     Returns
     -------
-    dict with iou, dice, f1, precision, recall, accuracy, auc_approx
+    dict with iou, dice, f1, precision, recall, accuracy, specificity, auc_pr
     """
     with torch.no_grad():
         p_bin = (pred > threshold).float()
@@ -111,6 +112,12 @@ def compute_metrics(pred: torch.Tensor, target: torch.Tensor, threshold: float =
         accuracy = (tp + tn) / (tp + fp + fn + tn + eps)
         specificity = tn / (tn + fp + eps)
 
+        # Compute AUC(PR) - Area Under Precision-Recall Curve
+        pred_flat = pred.cpu().numpy().flatten()
+        target_flat = target.cpu().numpy().flatten()
+        prec_curve, recall_curve, _ = precision_recall_curve(target_flat, pred_flat)
+        auc_pr = auc(recall_curve, prec_curve)
+
     return {
         "iou": iou,
         "dice": dice,
@@ -119,6 +126,7 @@ def compute_metrics(pred: torch.Tensor, target: torch.Tensor, threshold: float =
         "recall": recall,
         "accuracy": accuracy,
         "specificity": specificity,
+        "auc_pr": auc_pr,
     }
 
 

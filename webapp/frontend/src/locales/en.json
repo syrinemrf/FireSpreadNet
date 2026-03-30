@@ -1,0 +1,87 @@
+{
+  "app_title": "FireSpreadNet",
+  "app_subtitle": "Wildfire Monitoring & Prediction",
+  "sidebar": {
+    "active_fires": "Active Fires",
+    "declare_fire": "Declare Fire",
+    "simulation": "Simulation",
+    "explainability": "Explainability",
+    "about": "About"
+  },
+  "map": {
+    "search_placeholder": "Search location...",
+    "zoom_to_location": "Zoom to my location",
+    "click_to_declare": "Click on the map to declare a fire"
+  },
+  "fires": {
+    "active_title": "Active Fires (FIRMS)",
+    "loading": "Loading fire data...",
+    "no_fires": "No active fires in this area",
+    "count": "{{count}} active fire(s)",
+    "confidence": "Confidence",
+    "brightness": "Brightness",
+    "frp": "Fire Radiative Power",
+    "detected": "Detected",
+    "source": "Source"
+  },
+  "declare": {
+    "title": "Declare a Fire",
+    "description": "Click on the map to place a fire, then configure the simulation.",
+    "lat": "Latitude",
+    "lon": "Longitude",
+    "radius_km": "Initial radius (km)",
+    "start_simulation": "Start Simulation",
+    "cancel": "Cancel"
+  },
+  "simulation": {
+    "title": "Fire Spread Simulation",
+    "running": "Simulation running...",
+    "hour": "Hour",
+    "hours": "hours",
+    "step": "Advance 1 hour",
+    "step_n": "Advance {{n}} hours",
+    "auto_play": "Auto play",
+    "pause": "Pause",
+    "reset": "Reset",
+    "total_area": "Total area burned",
+    "km2": "km²",
+    "speed": "Spread speed",
+    "explain": "Explain",
+    "no_simulation": "No active simulation. Declare a fire to start.",
+    "simulate_fire": "Simulate Spread"
+  },
+  "explain": {
+    "title": "Prediction Explainability",
+    "description": "Feature importance for the fire spread prediction model.",
+    "general_info": "This shows general model feature importance. Start a simulation to see context-specific explanations based on real weather data.",
+    "feature": "Feature",
+    "importance": "Importance (%)",
+    "summary": "Summary",
+    "no_data": "Run a simulation first to see explainability data."
+  },
+  "about": {
+    "title": "About FireSpreadNet",
+    "what": "What is FireSpreadNet?",
+    "what_text": "FireSpreadNet is a deep learning-powered wildfire monitoring and prediction platform. It uses satellite imagery, weather data, and terrain information to predict fire spread patterns up to 24 hours in advance.",
+    "how": "How does it work?",
+    "how_text": "The system uses a Physics-Informed Cellular Automata (PI-CCA) neural network trained on Next Day Wildfire Spread data from NOAA/USGS. The model processes 12 input channels including temperature, humidity, wind, vegetation indices, elevation, and historical fire data.",
+    "data_sources": "Data Sources",
+    "data_firms": "NASA FIRMS — Active fire detection from VIIRS/MODIS satellites",
+    "data_weather": "Open-Meteo — Real-time weather forecasts",
+    "data_elevation": "Open-Elevation — Terrain elevation data (SRTM)",
+    "limitations": "Limitations",
+    "limitations_text": "This is a research prototype. Predictions are approximations and should NOT be used for emergency response decisions. The model was trained on US wildfire data and may not generalize to all regions.",
+    "tech_stack": "Technology Stack",
+    "tech_text": "PyTorch (ML), FastAPI (Backend), React + Leaflet (Frontend)",
+    "credits": "Credits",
+    "credits_text": "Developed as part of a Machine Learning research project on wildfire prediction. Based on the Next Day Wildfire Spread dataset (Huot et al., 2022).",
+    "close": "Close"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "retry": "Retry",
+    "close": "Close",
+    "ok": "OK"
+  }
+}

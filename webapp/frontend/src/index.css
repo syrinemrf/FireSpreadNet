@@ -1,0 +1,125 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #0a0e17;
+  color: #e2e8f0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+#root { width: 100vw; height: 100vh; overflow: hidden; }
+
+/* Mobile viewport fix */
+@supports (height: 100dvh) {
+  #root { height: 100dvh; }
+}
+
+/* Leaflet dark overrides */
+.leaflet-container { background: #0a0e17 !important; }
+.leaflet-control-zoom { display: none !important; } /* We use custom controls */
+.leaflet-control-attribution { background: rgba(10, 14, 23, 0.8) !important; color: #64748b !important; font-size: 9px !important; }
+.leaflet-control-attribution a { color: #94a3b8 !important; }
+.leaflet-control-scale-line {
+  background: rgba(21, 28, 44, 0.9) !important;
+  border-color: #64748b !important;
+  color: #94a3b8 !important;
+  font-size: 10px !important;
+  padding: 1px 5px !important;
+}
+.leaflet-popup-content-wrapper { background: #151c2c; color: #e2e8f0; border-radius: 8px; box-shadow: 0 8px 32px rgba(0,0,0,0.6); }
+.leaflet-popup-tip { background: #151c2c; }
+.leaflet-popup-close-button { color: #94a3b8 !important; }
+.leaflet-popup-close-button:hover { color: #e2e8f0 !important; }
+
+/* Simulation tooltip */
+.sim-tooltip {
+  background: rgba(21, 28, 44, 0.9) !important;
+  border: 1px solid #2d3b50 !important;
+  color: #fbbf24 !important;
+  font-size: 10px !important;
+  font-weight: 600 !important;
+  padding: 2px 6px !important;
+  border-radius: 4px !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.4) !important;
+}
+.sim-tooltip::before { border-top-color: #2d3b50 !important; }
+
+/* Fire marker pulse */
+@keyframes fire-pulse {
+  0%, 100% { transform: scale(1); opacity: 0.9; }
+  50% { transform: scale(1.4); opacity: 0.4; }
+}
+
+.fire-marker {
+  width: 10px; height: 10px;
+  background: radial-gradient(circle, #fbbf24 0%, #f97316 50%, #dc2626 100%);
+  border-radius: 50%;
+  position: relative;
+  box-shadow: 0 0 8px 2px rgba(249, 115, 22, 0.6);
+}
+
+.fire-marker::after {
+  content: '';
+  position: absolute; inset: -4px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(249, 115, 22, 0.4) 0%, transparent 70%);
+  animation: fire-pulse 2s ease-in-out infinite;
+}
+
+/* Custom map control buttons */
+.map-ctrl-btn {
+  width: 32px;
+  height: 32px;
+  background: rgba(21, 28, 44, 0.95);
+  border: 1px solid #2d3b50;
+  border-radius: 8px;
+  color: #e2e8f0;
+  font-size: 18px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  user-select: none;
+  -webkit-user-select: none;
+}
+.map-ctrl-btn:hover { background: #243044; }
+.map-ctrl-btn:active { transform: scale(0.95); }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #0f1520; }
+::-webkit-scrollbar-thumb { background: #2d3b50; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #3d4b60; }
+
+/* Panel transitions */
+.panel-enter { transform: translateX(-100%); opacity: 0; }
+.panel-enter-active { transform: translateX(0); opacity: 1; transition: all 0.3s ease-out; }
+.panel-exit-active { transform: translateX(-100%); opacity: 0; transition: all 0.2s ease-in; }
+
+/* Range input theming for simulation slider */
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #f97316;
+  cursor: pointer;
+  box-shadow: 0 0 6px rgba(249, 115, 22, 0.5);
+}
+input[type="range"]::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #f97316;
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 0 6px rgba(249, 115, 22, 0.5);
+}

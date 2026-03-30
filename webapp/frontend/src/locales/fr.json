@@ -1,0 +1,87 @@
+{
+  "app_title": "FireSpreadNet",
+  "app_subtitle": "Surveillance & Prédiction des Feux de Forêt",
+  "sidebar": {
+    "active_fires": "Feux actifs",
+    "declare_fire": "Déclarer un feu",
+    "simulation": "Simulation",
+    "explainability": "Explicabilité",
+    "about": "À propos"
+  },
+  "map": {
+    "search_placeholder": "Rechercher un lieu...",
+    "zoom_to_location": "Aller à ma position",
+    "click_to_declare": "Cliquez sur la carte pour déclarer un feu"
+  },
+  "fires": {
+    "active_title": "Feux actifs (FIRMS)",
+    "loading": "Chargement des données de feux...",
+    "no_fires": "Aucun feu actif dans cette zone",
+    "count": "{{count}} feu(x) actif(s)",
+    "confidence": "Confiance",
+    "brightness": "Luminosité",
+    "frp": "Puissance radiative du feu",
+    "detected": "Détecté",
+    "source": "Source"
+  },
+  "declare": {
+    "title": "Déclarer un feu",
+    "description": "Cliquez sur la carte pour placer un feu, puis configurez la simulation.",
+    "lat": "Latitude",
+    "lon": "Longitude",
+    "radius_km": "Rayon initial (km)",
+    "start_simulation": "Lancer la simulation",
+    "cancel": "Annuler"
+  },
+  "simulation": {
+    "title": "Simulation de propagation",
+    "running": "Simulation en cours...",
+    "hour": "Heure",
+    "hours": "heures",
+    "step": "Avancer d'1 heure",
+    "step_n": "Avancer de {{n}} heures",
+    "auto_play": "Lecture auto",
+    "pause": "Pause",
+    "reset": "Réinitialiser",
+    "total_area": "Surface totale brûlée",
+    "km2": "km²",
+    "speed": "Vitesse de propagation",
+    "explain": "Expliquer",
+    "no_simulation": "Aucune simulation active. Déclarez un feu pour commencer.",
+    "simulate_fire": "Simuler la propagation"
+  },
+  "explain": {
+    "title": "Explicabilité de la prédiction",
+    "description": "Importance des variables pour le modèle de prédiction de propagation du feu.",
+    "general_info": "Ceci montre l'importance générale des variables du modèle. Lancez une simulation pour voir des explications contextuelles basées sur les données météo réelles.",
+    "feature": "Variable",
+    "importance": "Importance (%)",
+    "summary": "Résumé",
+    "no_data": "Lancez une simulation pour voir les données d'explicabilité."
+  },
+  "about": {
+    "title": "À propos de FireSpreadNet",
+    "what": "Qu'est-ce que FireSpreadNet ?",
+    "what_text": "FireSpreadNet est une plateforme de surveillance et de prédiction des feux de forêt basée sur le deep learning. Elle utilise des images satellites, des données météo et des informations de terrain pour prédire la propagation des feux jusqu'à 24 heures à l'avance.",
+    "how": "Comment ça fonctionne ?",
+    "how_text": "Le système utilise un réseau de neurones Automate Cellulaire Informé par la Physique (PI-CCA) entraîné sur les données Next Day Wildfire Spread de NOAA/USGS. Le modèle traite 12 canaux d'entrée comprenant température, humidité, vent, indices de végétation, altitude et historique des feux.",
+    "data_sources": "Sources de données",
+    "data_firms": "NASA FIRMS — Détection des feux actifs par satellites VIIRS/MODIS",
+    "data_weather": "Open-Meteo — Prévisions météo en temps réel",
+    "data_elevation": "Open-Elevation — Données d'altitude (SRTM)",
+    "limitations": "Limitations",
+    "limitations_text": "Ceci est un prototype de recherche. Les prédictions sont des approximations et ne doivent PAS être utilisées pour les décisions d'intervention d'urgence. Le modèle a été entraîné sur des données de feux américains et peut ne pas se généraliser à toutes les régions.",
+    "tech_stack": "Stack technique",
+    "tech_text": "PyTorch (ML), FastAPI (Backend), React + Leaflet (Frontend)",
+    "credits": "Crédits",
+    "credits_text": "Développé dans le cadre d'un projet de recherche en Machine Learning sur la prédiction des feux de forêt. Basé sur le jeu de données Next Day Wildfire Spread (Huot et al., 2022).",
+    "close": "Fermer"
+  },
+  "common": {
+    "loading": "Chargement...",
+    "error": "Une erreur est survenue",
+    "retry": "Réessayer",
+    "close": "Fermer",
+    "ok": "OK"
+  }
+}
