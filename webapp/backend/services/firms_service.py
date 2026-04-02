@@ -1,5 +1,6 @@
 """Fetch active fire data from NASA FIRMS."""
 
+import time
 import httpx
 from typing import Optional
 from config import FIRMS_MAP_KEY
@@ -7,6 +8,10 @@ from config import FIRMS_MAP_KEY
 
 FIRMS_CSV_URL = "https://firms.modaps.eosdis.nasa.gov/api/area/csv"
 FIRMS_OPEN_URL = "https://firms.modaps.eosdis.nasa.gov/api/country/csv"
+
+# Simple in-memory cache: {cache_key: (timestamp, data)}
+_cache: dict[str, tuple[float, list[dict]]] = {}
+_CACHE_TTL = 300  # 5 minutes
 
 
 async def fetch_active_fires(
@@ -16,10 +21,20 @@ async def fetch_active_fires(
     """Fetch active fires within bounding box from FIRMS API.
 
     Falls back to sample data if no API key is configured.
+    Uses a 5-minute in-memory cache to avoid repeated API calls.
     """
+    cache_key = f"{west},{south},{east},{north},{days},{source}"
+    cached = _cache.get(cache_key)
+    if cached and (time.time() - cached[0]) < _CACHE_TTL:
+        return cached[1]
+
     if FIRMS_MAP_KEY:
-        return await _fetch_from_firms(west, south, east, north, days, source)
-    return _generate_sample_fires(west, south, east, north)
+        fires = await _fetch_from_firms(west, south, east, north, days, source)
+    else:
+        fires = _generate_sample_fires(west, south, east, north)
+
+    _cache[cache_key] = (time.time(), fires)
+    return fires
 
 
 async def _fetch_from_firms(

@@ -9,6 +9,8 @@ body {
   background: #0a0e17;
   color: #e2e8f0;
   -webkit-tap-highlight-color: transparent;
+  /* Prevent pull-to-refresh on mobile */
+  overscroll-behavior: none;
 }
 
 #root { width: 100vw; height: 100vh; overflow: hidden; }
@@ -32,8 +34,22 @@ body {
 }
 .leaflet-popup-content-wrapper { background: #151c2c; color: #e2e8f0; border-radius: 8px; box-shadow: 0 8px 32px rgba(0,0,0,0.6); }
 .leaflet-popup-tip { background: #151c2c; }
-.leaflet-popup-close-button { color: #94a3b8 !important; }
+.leaflet-popup-close-button { color: #94a3b8 !important; font-size: 18px !important; width: 24px !important; height: 24px !important; }
 .leaflet-popup-close-button:hover { color: #e2e8f0 !important; }
+
+/* Make popup close button easier to tap on mobile */
+@media (max-width: 640px) {
+  .leaflet-popup-close-button {
+    font-size: 22px !important;
+    width: 32px !important;
+    height: 32px !important;
+    right: 4px !important;
+    top: 4px !important;
+  }
+  .leaflet-popup-content {
+    margin: 10px 14px !important;
+  }
+}
 
 /* Simulation tooltip */
 .sim-tooltip {
@@ -72,8 +88,8 @@ body {
 
 /* Custom map control buttons */
 .map-ctrl-btn {
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   background: rgba(21, 28, 44, 0.95);
   border: 1px solid #2d3b50;
   border-radius: 8px;
@@ -88,7 +104,20 @@ body {
   box-shadow: 0 2px 8px rgba(0,0,0,0.3);
   user-select: none;
   -webkit-user-select: none;
+  /* Minimum touch target size */
+  min-width: 36px;
+  min-height: 36px;
 }
+
+@media (min-width: 640px) {
+  .map-ctrl-btn {
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    min-height: 32px;
+  }
+}
+
 .map-ctrl-btn:hover { background: #243044; }
 .map-ctrl-btn:active { transform: scale(0.95); }
 
@@ -107,19 +136,45 @@ body {
 input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  width: 14px;
-  height: 14px;
+  width: 18px;
+  height: 18px;
   border-radius: 50%;
   background: #f97316;
   cursor: pointer;
   box-shadow: 0 0 6px rgba(249, 115, 22, 0.5);
 }
 input[type="range"]::-moz-range-thumb {
-  width: 14px;
-  height: 14px;
+  width: 18px;
+  height: 18px;
   border-radius: 50%;
   background: #f97316;
   cursor: pointer;
   border: none;
   box-shadow: 0 0 6px rgba(249, 115, 22, 0.5);
+}
+
+/* Mobile: larger slider thumb for touch */
+@media (max-width: 640px) {
+  input[type="range"]::-webkit-slider-thumb {
+    width: 22px;
+    height: 22px;
+  }
+  input[type="range"]::-moz-range-thumb {
+    width: 22px;
+    height: 22px;
+  }
+}
+
+/* Prevent text selection on interactive elements */
+button, .map-ctrl-btn {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Safe area insets for notched phones */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .absolute.bottom-2 {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
 }

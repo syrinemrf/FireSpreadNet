@@ -49,11 +49,11 @@ function MapUpdater({ center, zoom }) {
   return null;
 }
 
-/* ── Handle map clicks ── */
-function ClickHandler({ onClick, declaring }) {
+/* ── Handle map clicks for both declaring and simulating ── */
+function ClickHandler({ onClick, declaring, simulating }) {
   useMapEvents({
     click: (e) => {
-      if (declaring) onClick(e.latlng);
+      if (declaring || simulating) onClick(e.latlng);
     },
   });
   return null;
@@ -104,6 +104,7 @@ export default function MapView({
   declaredFires,
   pendingDeclare,
   declaring,
+  simulating,
   simGeoJson,
   currentHour,
   onMapClick,
@@ -135,6 +136,9 @@ export default function MapView({
     mapInstanceRef.current?.zoomOut();
   }, []);
 
+  // Determine cursor style
+  const cursorStyle = simulating ? "crosshair" : declaring ? "crosshair" : "grab";
+
   return (
     <div className="flex-1 relative">
       <MapContainer
@@ -142,18 +146,25 @@ export default function MapView({
         zoom={zoom}
         className="w-full h-full z-0"
         zoomControl={false}
-        style={{ cursor: declaring ? "crosshair" : "grab" }}
+        style={{ cursor: cursorStyle }}
       >
         <MapRefProvider onRef={(map) => { mapInstanceRef.current = map; }} />
         <MapUpdater center={center} zoom={zoom} />
-        <ClickHandler onClick={onMapClick} declaring={declaring} />
+        <ClickHandler onClick={onMapClick} declaring={declaring} simulating={simulating} />
         <MousePositionTracker onMove={setMousePos} />
         <ScaleControl position="bottomleft" imperial={false} />
 
+        {/* Satellite imagery base — matches NASA FIRMS style */}
         <TileLayer
-          url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-          attribution='&copy; <a href="https://carto.com/">CARTO</a> &copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>'
+          url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+          attribution='&copy; <a href="https://www.esri.com/">Esri</a> &mdash; Sources: Esri, Maxar, Earthstar Geographics'
           maxZoom={19}
+        />
+        {/* Semi-transparent labels overlay for readability */}
+        <TileLayer
+          url="https://services.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}"
+          maxZoom={19}
+          opacity={0.6}
         />
 
         {/* Active fires — NASA FIRMS style circles */}
@@ -184,12 +195,15 @@ export default function MapView({
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
+                    // Close popup by clicking the map
+                    if (mapInstanceRef.current) mapInstanceRef.current.closePopup();
                     if (onSimulateActive) onSimulateActive(f);
                   }}
                   style={{
-                    marginTop: 8, width: "100%", padding: "6px 8px",
+                    marginTop: 8, width: "100%", padding: "8px 8px",
                     background: "#ea580c", color: "white", border: "none",
-                    borderRadius: 4, fontSize: 11, fontWeight: 600, cursor: "pointer",
+                    borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: "pointer",
+                    minHeight: 40,
                   }}
                 >
                   ▶ Simulate Spread

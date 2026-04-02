@@ -82,17 +82,23 @@ class CombinedLoss(nn.Module):
 # METRICS
 # ══════════════════════════════════════════════════════════════
 
-def compute_metrics(pred: torch.Tensor, target: torch.Tensor, threshold: float = 0.5) -> dict:
+def compute_metrics(pred: torch.Tensor, target: torch.Tensor, threshold: float = 0.5, 
+                    compute_auc_pr: bool = False) -> dict:
     """Compute fire spread evaluation metrics.
 
     Parameters
     ----------
-    pred   : (B, 1, H, W) float — predicted probabilities [0, 1]
-    target : (B, 1, H, W) float — binary ground truth
+    pred            : (B, 1, H, W) float — predicted probabilities [0, 1]
+    target          : (B, 1, H, W) float — binary ground truth
+    threshold       : float — classification threshold (default 0.5)
+    compute_auc_pr  : bool — whether to compute AUC-PR (memory-intensive, skip during training)
 
     Returns
     -------
     dict with iou, dice, f1, precision, recall, accuracy, specificity, auc_pr
+    
+    Note: AUC-PR computation can consume 400+ MiB with large batches. Disable during training 
+    on low-VRAM GPUs (e.g., GTX 1050). Enable only for final evaluation.
     """
     with torch.no_grad():
         p_bin = (pred > threshold).float()
@@ -112,11 +118,13 @@ def compute_metrics(pred: torch.Tensor, target: torch.Tensor, threshold: float =
         accuracy = (tp + tn) / (tp + fp + fn + tn + eps)
         specificity = tn / (tn + fp + eps)
 
-        # Compute AUC(PR) - Area Under Precision-Recall Curve
-        pred_flat = pred.cpu().numpy().flatten()
-        target_flat = target.cpu().numpy().flatten()
-        prec_curve, recall_curve, _ = precision_recall_curve(target_flat, pred_flat)
-        auc_pr = auc(recall_curve, prec_curve)
+        # Compute AUC(PR) only if requested (memory-intensive)
+        auc_pr = 0.0
+        if compute_auc_pr:
+            pred_flat = pred.cpu().numpy().flatten()
+            target_flat = target.cpu().numpy().flatten()
+            prec_curve, recall_curve, _ = precision_recall_curve(target_flat, pred_flat)
+            auc_pr = auc(recall_curve, prec_curve)
 
     return {
         "iou": iou,

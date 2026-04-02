@@ -1,6 +1,7 @@
 """FireSpreadNet — Backend API Server."""
 
 import sys
+import asyncio
 from pathlib import Path
 from contextlib import asynccontextmanager
 
@@ -22,8 +23,8 @@ from api.explainability import router as explainability_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Load ML model on startup."""
-    model_service.load_model()
+    """Load ML model in background so the API is available immediately."""
+    asyncio.get_event_loop().run_in_executor(None, model_service.load_model)
     yield
 
 

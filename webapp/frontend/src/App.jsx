@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import MapView from "./components/MapView";
 import Sidebar from "./components/Sidebar";
@@ -17,6 +17,7 @@ export default function App() {
   const [fires, setFires] = useState([]);
   const [declaredFires, setDeclaredFires] = useState([]);
   const [declaring, setDeclaring] = useState(false);
+  const [simulating, setSimulating] = useState(false);
   const [pendingDeclare, setPendingDeclare] = useState(null);
   const [simulation, setSimulation] = useState(null);
   const [simGeoJson, setSimGeoJson] = useState(null);
@@ -24,9 +25,10 @@ export default function App() {
   const [explainData, setExplainData] = useState(null);
   const [activePanel, setActivePanel] = useState("fires");
   const [showAbout, setShowAbout] = useState(false);
-  const [mapCenter, setMapCenter] = useState([36.5, -119.5]);
-  const [mapZoom, setMapZoom] = useState(6);
+  const [mapCenter, setMapCenter] = useState([20, -10]);
+  const [mapZoom, setMapZoom] = useState(3);
   const [loading, setLoading] = useState(false);
+  const [simLoading, setSimLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -43,13 +45,25 @@ export default function App() {
     }
   }, []);
 
-  /* ── declare fire on map click ─────────── */
+  /* ── auto-load fires on mount ──────────── */
+  useEffect(() => {
+    loadFires();
+  }, [loadFires]);
+
+  /* ── map click handling ─────────────────── */
   const handleMapClick = useCallback(
     (latlng) => {
-      if (!declaring) return;
-      setPendingDeclare({ lat: latlng.lat, lon: latlng.lng, radius_km: 1.0 });
+      if (simulating) {
+        // Direct simulation mode — click map to start simulation immediately
+        startSimulation(latlng.lat, latlng.lng, 1.0);
+        return;
+      }
+      if (declaring) {
+        setPendingDeclare({ lat: latlng.lat, lon: latlng.lng, radius_km: 1.0 });
+        return;
+      }
     },
-    [declaring]
+    [declaring, simulating]
   );
 
   const confirmDeclare = useCallback(async () => {
@@ -75,7 +89,7 @@ export default function App() {
 
   /* ── simulation ────────────────────────── */
   const startSimulation = useCallback(async (lat, lon, radius_km = 1.0) => {
-    setLoading(true);
+    setSimLoading(true);
     setErrorMsg(null);
     try {
       const resp = await api.post("/api/simulation/start", {
@@ -89,14 +103,18 @@ export default function App() {
       setActivePanel("simulation");
       setPendingDeclare(null);
       setDeclaring(false);
+      setSimulating(false);
       setSidebarOpen(false);
+      // Center map on simulation
+      setMapCenter([lat, lon]);
+      setMapZoom(11);
     } catch (err) {
       const msg = err.response?.data?.detail || err.message;
       setErrorMsg(msg);
       setTimeout(() => setErrorMsg(null), 5000);
       console.error("Simulation start error:", err);
     } finally {
-      setLoading(false);
+      setSimLoading(false);
     }
   }, []);
 
@@ -108,14 +126,12 @@ export default function App() {
 
   const simulateActiveFire = useCallback(async (fire) => {
     await startSimulation(fire.latitude, fire.longitude, 1.0);
-    setMapCenter([fire.latitude, fire.longitude]);
-    setMapZoom(10);
   }, [startSimulation]);
 
   const stepSimulation = useCallback(
     async (hours = 1) => {
       if (!simulation) return;
-      setLoading(true);
+      setSimLoading(true);
       try {
         const resp = await api.post(`/api/simulation/${simulation.simulation_id}/step`, { hours });
         setSimulation((prev) => ({ ...prev, ...resp.data }));
@@ -124,7 +140,7 @@ export default function App() {
       } catch (err) {
         console.error("Step error:", err);
       } finally {
-        setLoading(false);
+        setSimLoading(false);
       }
     },
     [simulation]
@@ -163,7 +179,6 @@ export default function App() {
       setMapCenter([geoPos.lat, geoPos.lon]);
       setMapZoom(12);
     } else {
-      // Re-request, it will update on next render
       navigator.geolocation?.getCurrentPosition(
         (pos) => {
           setMapCenter([pos.coords.latitude, pos.coords.longitude]);
@@ -191,6 +206,9 @@ export default function App() {
     }
   }, []);
 
+  /* ── active interaction mode label ─────── */
+  const interactionMode = simulating ? "simulation" : declaring ? "declare" : null;
+
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-dark-900">
       {/* Mobile menu toggle */}
@@ -208,6 +226,8 @@ export default function App() {
           setActivePanel={(p) => { setActivePanel(p); setSidebarOpen(false); }}
           declaring={declaring}
           setDeclaring={setDeclaring}
+          simulating={simulating}
+          setSimulating={setSimulating}
           setShowAbout={setShowAbout}
           onLoadFires={loadFires}
           onExplain={fetchExplainability}
@@ -233,6 +253,7 @@ export default function App() {
           declaredFires={declaredFires}
           pendingDeclare={pendingDeclare}
           declaring={declaring}
+          simulating={simulating}
           simGeoJson={simGeoJson}
           currentHour={currentHour}
           onMapClick={handleMapClick}
@@ -240,10 +261,36 @@ export default function App() {
           onSimulateActive={simulateActiveFire}
         />
 
+        {/* Loading indicator */}
+        {loading && fires.length === 0 && (
+          <div className="absolute top-20 left-1/2 -translate-x-1/2 z-[1200] bg-dark-700/95 backdrop-blur text-white text-xs sm:text-sm px-4 py-2 rounded-xl shadow-lg border border-dark-400/50 flex items-center gap-2">
+            <span className="inline-block w-3 h-3 border-2 border-fire-400 border-t-transparent rounded-full animate-spin"></span>
+            Loading active fires...
+          </div>
+        )}
+
+        {/* Simulation loading overlay */}
+        {simLoading && (
+          <div className="absolute top-20 left-1/2 -translate-x-1/2 z-[1200] bg-dark-700/95 backdrop-blur text-white text-xs sm:text-sm px-4 py-2 rounded-xl shadow-lg border border-fire-500/50 flex items-center gap-2">
+            <span className="inline-block w-3 h-3 border-2 border-fire-400 border-t-transparent rounded-full animate-spin"></span>
+            🔥 Simulating fire spread...
+          </div>
+        )}
+
         {/* Error toast */}
         {errorMsg && (
           <div className="absolute top-20 left-1/2 -translate-x-1/2 z-[1200] bg-red-600/95 text-white text-xs sm:text-sm px-4 py-2 rounded-xl shadow-lg border border-red-400/50 max-w-[90vw] text-center">
             ⚠️ {errorMsg}
+          </div>
+        )}
+
+        {/* Simulation pick mode overlay */}
+        {simulating && (
+          <div className="absolute top-16 left-1/2 -translate-x-1/2 z-[1000] bg-dark-700/95 backdrop-blur px-4 sm:px-6 py-2 sm:py-3 rounded-xl border border-green-500/30 shadow-lg flex flex-wrap items-center justify-center gap-2 sm:gap-4 max-w-[95vw]">
+            <span className="text-green-400 text-xs sm:text-sm font-medium">🔥 Click on the map to start a fire simulation</span>
+            <button onClick={() => setSimulating(false)} className="text-gray-400 hover:text-white text-sm">
+              ✕
+            </button>
           </div>
         )}
 
@@ -276,7 +323,7 @@ export default function App() {
             onStep={stepSimulation}
             onExplain={fetchExplainability}
             onReset={resetSimulation}
-            loading={loading}
+            loading={simLoading}
           />
         )}
 
