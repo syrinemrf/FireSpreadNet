@@ -42,6 +42,10 @@ DEFAULT_STATS = {
 # Channels that should NOT be normalised (binary masks)
 _NO_NORM = {"prev_fire_mask"}
 
+# Channels with heavily right-skewed distributions: apply log1p before z-scoring
+# (population density is log-normal: most pixels near 0, rare pixels in thousands)
+_LOG1P_CHANNELS = {"population"}
+
 
 def compute_statistics(samples) -> Dict[str, Dict[str, float]]:
     """Compute per-channel mean / std from input tensors.
@@ -61,6 +65,8 @@ def compute_statistics(samples) -> Dict[str, Dict[str, float]]:
     stats = {}
     for i, name in enumerate(FEATURE_ORDER):
         ch = stacked[:, i]
+        if name in _LOG1P_CHANNELS:
+            ch = np.log1p(np.maximum(ch, 0.0))  # match transform used in normalise()
         stats[name] = {
             "mean": float(np.nanmean(ch)),
             "std": float(np.nanstd(ch)) + 1e-8,
@@ -81,14 +87,15 @@ def normalise(tensor: np.ndarray, stats: dict = None) -> np.ndarray:
     out = tensor.copy().astype(np.float32)
     for i, name in enumerate(FEATURE_ORDER):
         if name in _NO_NORM:
-            # prev_fire_mask: clamp to [0, 1] — handles pre-processed data
-            # that may have been stored as [-1, 1] instead of binary {0, 1}
+            # prev_fire_mask: clamp to [0, 1] — handles data stored as [-1, 1]
             out[i] = np.clip(out[i], 0.0, 1.0)
             continue
+        # Log1p transform for right-skewed channels BEFORE z-scoring
+        if name in _LOG1P_CHANNELS:
+            out[i] = np.log1p(np.maximum(out[i], 0.0))
         if name in stats:
             out[i] = (out[i] - stats[name]["mean"]) / stats[name]["std"]
-            # ★ FIX: clip to 5σ — removes extreme outliers without losing
-            # meaningful signal (>99.99% of a Gaussian falls within ±5σ)
+            # Clip to ±5σ — removes extreme outliers (e.g. wind_speed -147σ)
             out[i] = np.clip(out[i], -5.0, 5.0)
     return out
 
