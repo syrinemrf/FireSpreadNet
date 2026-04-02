@@ -71,15 +71,25 @@ def compute_statistics(samples) -> Dict[str, Dict[str, float]]:
 def normalise(tensor: np.ndarray, stats: dict = None) -> np.ndarray:
     """Z-score normalise a (C, H, W) array channel-wise.
 
-    prev_fire_mask is NOT normalised (binary).
+    prev_fire_mask is NOT normalised (binary — clamped to [0, 1]).
+
+    IMPORTANT: After z-score we clip to [-5, 5] to remove extreme outliers
+    (e.g., corrupted wind_speed values reaching ±500 000) that would otherwise
+    produce values of -147σ and cause gradient explosion during training.
     """
     stats = stats or DEFAULT_STATS
     out = tensor.copy().astype(np.float32)
     for i, name in enumerate(FEATURE_ORDER):
         if name in _NO_NORM:
+            # prev_fire_mask: clamp to [0, 1] — handles pre-processed data
+            # that may have been stored as [-1, 1] instead of binary {0, 1}
+            out[i] = np.clip(out[i], 0.0, 1.0)
             continue
         if name in stats:
             out[i] = (out[i] - stats[name]["mean"]) / stats[name]["std"]
+            # ★ FIX: clip to 5σ — removes extreme outliers without losing
+            # meaningful signal (>99.99% of a Gaussian falls within ±5σ)
+            out[i] = np.clip(out[i], -5.0, 5.0)
     return out
 
 
