@@ -30,14 +30,19 @@ from config import TRAIN_CONFIG, MODELS_DIR
 # ══════════════════════════════════════════════════════════════
 
 class FocalLoss(nn.Module):
-    """Focal Loss (Lin et al., 2017) for imbalanced fire/no-fire cells."""
+    """Focal Loss for extreme class imbalance (fire: ~1%, no-fire: ~99%).
 
-    def __init__(self, alpha: float = 0.75, gamma: float = 2.0):
+    alpha must be ≈ 1 - fire_freq.  For fire_freq=1.07%: alpha ≈ 0.989.
+    Rule: alpha_fire × N_fire = alpha_no_fire × N_no_fire  ↔  alpha = 1 - freq_fire
+    """
+
+    def __init__(self, alpha: float = 0.99, gamma: float = 2.0):
         super().__init__()
         self.alpha = alpha
         self.gamma = gamma
 
     def forward(self, pred: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
+        pred = pred.clamp(1e-6, 1 - 1e-6)   # numerical safety for FP16
         bce = F.binary_cross_entropy(pred, target, reduction="none")
         p_t = pred * target + (1 - pred) * (1 - target)
         alpha_t = self.alpha * target + (1 - self.alpha) * (1 - target)
@@ -46,27 +51,32 @@ class FocalLoss(nn.Module):
 
 
 class DiceLoss(nn.Module):
-    """Soft Dice loss for spatial overlap."""
+    """Soft Dice loss computed per-sample then averaged.
+
+    Per-sample computation prevents large batches from diluting the
+    sparse fire signal across the full batch dimension.
+    """
 
     def __init__(self, smooth: float = 1.0):
         super().__init__()
         self.smooth = smooth
 
     def forward(self, pred: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
-        pred_flat = pred.view(-1)
-        target_flat = target.view(-1)
-        intersection = (pred_flat * target_flat).sum()
+        B = pred.size(0)
+        pred_flat   = pred.view(B, -1).float()
+        target_flat = target.view(B, -1).float()
+        intersection = (pred_flat * target_flat).sum(dim=1)
         dice = (2.0 * intersection + self.smooth) / (
-            pred_flat.sum() + target_flat.sum() + self.smooth
+            pred_flat.sum(dim=1) + target_flat.sum(dim=1) + self.smooth
         )
-        return 1.0 - dice
+        return (1.0 - dice).mean()
 
 
 class CombinedLoss(nn.Module):
     """Weighted sum of Focal + Dice losses."""
 
     def __init__(self, focal_w: float = 0.5, dice_w: float = 0.5,
-                 alpha: float = 0.75, gamma: float = 2.0):
+                 alpha: float = 0.99, gamma: float = 2.0):
         super().__init__()
         self.focal = FocalLoss(alpha, gamma)
         self.dice = DiceLoss()
@@ -74,8 +84,9 @@ class CombinedLoss(nn.Module):
         self.dice_w = dice_w
 
     def forward(self, pred: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
-        return self.focal_w * self.focal(pred, target) + \
-               self.dice_w * self.dice(pred, target)
+        pred_f = pred.float().clamp(1e-6, 1 - 1e-6)
+        return self.focal_w * self.focal(pred_f, target.float()) + \
+               self.dice_w * self.dice(pred_f, target.float())
 
 
 # ══════════════════════════════════════════════════════════════
