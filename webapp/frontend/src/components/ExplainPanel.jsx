@@ -17,21 +17,6 @@ const FEATURE_COLORS = {
   population:     "#64748b",
 };
 
-const FEATURE_LABELS = {
-  prev_fire_mask: "Previous Fire",
-  wind_speed:     "Wind Speed",
-  wind_direction: "Wind Direction",
-  max_temp:       "Max Temp",
-  min_temp:       "Min Temp",
-  humidity:       "Humidity",
-  drought_index:  "Drought Index",
-  ndvi:           "Vegetation (NDVI)",
-  elevation:      "Elevation",
-  erc:            "Energy Release",
-  precipitation:  "Precipitation",
-  population:     "Population",
-};
-
 export default function ExplainPanel({ data, onClose }) {
   const { t } = useTranslation();
 
@@ -42,7 +27,7 @@ export default function ExplainPanel({ data, onClose }) {
   const chartData = data.factors
     .sort((a, b) => b.importance - a.importance)
     .map((f) => ({
-      name: FEATURE_LABELS[f.feature] || f.feature.replace(/_/g, " "),
+      name: t(`explain.features.${f.feature}`, { defaultValue: f.feature.replace(/_/g, " ") }),
       value: parseFloat((f.importance * 100).toFixed(1)),
       color: FEATURE_COLORS[f.feature] || "#94a3b8",
     }));
@@ -104,7 +89,7 @@ export default function ExplainPanel({ data, onClose }) {
         {/* Model info */}
         {data.model_name && (
           <div className="mt-2 text-[9px] text-gray-500 text-center">
-            Model: <span className="text-gray-400 font-medium">{data.model_name}</span>
+            {t("explain.model")}: <span className="text-gray-400 font-medium">{data.model_name}</span>
           </div>
         )}
       </div>

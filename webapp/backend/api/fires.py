@@ -3,6 +3,7 @@
 from fastapi import APIRouter, Query
 from pydantic import BaseModel
 from services.firms_service import fetch_active_fires
+from services.risk_service import compute_fire_risk
 
 router = APIRouter()
 
@@ -57,3 +58,16 @@ async def declare_fire(fire: DeclaredFire):
 async def get_declared_fires():
     """Get all user-declared fires."""
     return {"count": len(_declared_fires), "fires": _declared_fires}
+
+
+class RiskRequest(BaseModel):
+    latitude: float
+    longitude: float
+    radius_km: float = 32.0  # Area to assess (default: 32km around center)
+
+
+@router.post("/risk")
+async def get_fire_risk(req: RiskRequest):
+    """Compute fire risk assessment for an area based on weather conditions."""
+    result = await compute_fire_risk(req.latitude, req.longitude, req.radius_km)
+    return result

@@ -4,14 +4,25 @@
   "sidebar": {
     "active_fires": "Feux actifs",
     "declare_fire": "Déclarer un feu",
+    "risk": "Risque feu",
     "simulation": "Simulation",
     "explainability": "Explicabilité",
-    "about": "À propos"
+    "about": "À propos",
+    "group_monitor": "Surveillance",
+    "group_respond": "Intervention",
+    "group_analyze": "Analyse",
+    "group_info": "Infos",
+    "model_online": "Modèles actifs",
+    "collapse": "Réduire",
+    "expand": "Élargir"
   },
   "map": {
     "search_placeholder": "Rechercher un lieu...",
     "zoom_to_location": "Aller à ma position",
-    "click_to_declare": "Cliquez sur la carte pour déclarer un feu"
+    "click_to_declare": "Cliquez sur la carte pour déclarer un feu",
+    "click_to_simulate": "Cliquez sur la carte pour lancer une simulation",
+    "position": "Position",
+    "coordinates": "Coordonnées"
   },
   "fires": {
     "active_title": "Feux actifs (FIRMS)",
@@ -22,7 +33,37 @@
     "brightness": "Luminosité",
     "frp": "Puissance radiative du feu",
     "detected": "Détecté",
-    "source": "Source"
+    "source": "Source",
+    "active_marker": "Feu actif",
+    "declared_marker": "Feu déclaré",
+    "confidence_high": "Élevée",
+    "confidence_nominal": "Nominale",
+    "confidence_low": "Faible",
+    "firms_legend": "NASA FIRMS — Feux actifs"
+  },
+  "risk": {
+    "title": "Évaluation du risque incendie",
+    "loading": "Analyse du risque incendie...",
+    "click_to_pick": "Cliquez sur la carte pour évaluer le risque à cet emplacement",
+    "ai_model_badge": "Modèle IA Risque",
+    "level_extreme": "Risque extrême",
+    "level_high": "Risque élevé",
+    "level_moderate": "Risque modéré",
+    "level_low": "Risque faible",
+    "score": "Score de risque",
+    "analyze": "Analyser le risque",
+    "clear": "Effacer le risque",
+    "legend": "Indice de risque incendie",
+    "factors": "Facteurs contributifs",
+    "factor_temperature": "Température",
+    "factor_humidity": "Humidité",
+    "factor_wind": "Vent",
+    "factor_precipitation": "Précipitations",
+    "impact_high": "élevé",
+    "impact_moderate": "modéré",
+    "impact_low": "faible",
+    "description": "Évaluation du risque incendie basée sur les conditions météo actuelles, le terrain et la végétation.",
+    "weather_conditions": "Conditions actuelles"
   },
   "declare": {
     "title": "Déclarer un feu",
@@ -31,11 +72,14 @@
     "lon": "Longitude",
     "radius_km": "Rayon initial (km)",
     "start_simulation": "Lancer la simulation",
-    "cancel": "Annuler"
+    "confirm": "Confirmer le feu",
+    "cancel": "Annuler",
+    "click_start_sim": "Cliquez « Lancer la simulation » ci-dessus"
   },
   "simulation": {
     "title": "Simulation de propagation",
-    "running": "Simulation en cours...",
+    "running": "Simulation de propagation en cours...",
+    "computing": "Calcul de la propagation du feu...",
     "hour": "Heure",
     "hours": "heures",
     "step": "Avancer d'1 heure",
@@ -48,7 +92,10 @@
     "speed": "Vitesse de propagation",
     "explain": "Expliquer",
     "no_simulation": "Aucune simulation active. Déclarez un feu pour commencer.",
-    "simulate_fire": "Simuler la propagation"
+    "simulate_fire": "Simuler la propagation",
+    "badge": "SIMULATION — H+{{hour}}",
+    "legend_title": "Simulation — Propagation du feu",
+    "click_to_start": "Cliquez sur la carte pour lancer une simulation"
   },
   "explain": {
     "title": "Explicabilité de la prédiction",
@@ -57,7 +104,22 @@
     "feature": "Variable",
     "importance": "Importance (%)",
     "summary": "Résumé",
-    "no_data": "Lancez une simulation pour voir les données d'explicabilité."
+    "no_data": "Lancez une simulation pour voir les données d'explicabilité.",
+    "model": "Modèle",
+    "features": {
+      "prev_fire_mask": "Feu précédent",
+      "wind_speed": "Vitesse du vent",
+      "wind_direction": "Direction du vent",
+      "max_temp": "Température max",
+      "min_temp": "Température min",
+      "humidity": "Humidité",
+      "drought_index": "Indice de sécheresse",
+      "ndvi": "Végétation (NDVI)",
+      "elevation": "Altitude",
+      "erc": "Énergie dégagée",
+      "precipitation": "Précipitations",
+      "population": "Population"
+    }
   },
   "about": {
     "title": "À propos de FireSpreadNet",
@@ -77,11 +139,42 @@
     "credits_text": "Développé dans le cadre d'un projet de recherche en Machine Learning sur la prédiction des feux de forêt. Basé sur le jeu de données Next Day Wildfire Spread (Huot et al., 2022).",
     "close": "Fermer"
   },
+  "welcome": {
+    "title": "Bienvenue sur FireSpreadNet",
+    "subtitle": "Votre plateforme de surveillance et prédiction des feux de forêt",
+    "layer_fires": "Feux actifs",
+    "layer_fires_desc": "Détections en temps réel des feux par les satellites NASA FIRMS",
+    "layer_risk": "Risque incendie",
+    "layer_risk_desc": "Probabilité d'ignition prédite par l'IA selon les conditions",
+    "layer_sim": "Simulation",
+    "layer_sim_desc": "Simulez la propagation du feu jusqu'à 24h à l'avance",
+    "got_it": "Compris",
+    "dont_show": "Ne plus afficher"
+  },
+  "tips": {
+    "emergency": "URGENCE",
+    "title": "Feu déclaré — Actions d'urgence",
+    "subtitle": "Un feu a été signalé à cet emplacement. Agissez immédiatement.",
+    "call_emergency_title": "Appeler les secours",
+    "call_emergency_desc": "Appelez immédiatement le 18 (pompiers), le 112 (urgences européennes) ou le 15 (SAMU). Communiquez vos coordonnées GPS exactes.",
+    "evacuate_title": "Évacuer la zone",
+    "evacuate_desc": "Quittez la zone immédiatement. Éloignez-vous du feu en suivant le vent (vent dans le dos) et en montant si possible. Ne revenez pas sans autorisation.",
+    "alert_neighbors_title": "Alerter les voisins",
+    "alert_neighbors_desc": "Prévenez les riverains et aidez les personnes vulnérables à évacuer. Utilisez tous les moyens de communication disponibles.",
+    "no_vehicles_title": "Éviter l'embouteillage",
+    "no_vehicles_desc": "Laissez les routes libres pour les secours. N'utilisez votre véhicule qu'en dernier recours. Fermez toutes les fenêtres.",
+    "stay_informed_title": "Rester informé",
+    "stay_informed_desc": "Suivez les alertes officielles via la radio, l'application Alertes Crises ou les autorités locales. Respectez scrupuleusement les consignes.",
+    "emergency_numbers": "Numéros d'urgence",
+    "simulate_cta": "Simuler la propagation depuis ici",
+    "close_panel": "Fermer"
+  },
   "common": {
     "loading": "Chargement...",
     "error": "Une erreur est survenue",
     "retry": "Réessayer",
     "close": "Fermer",
-    "ok": "OK"
+    "ok": "OK",
+    "position": "Position"
   }
 }

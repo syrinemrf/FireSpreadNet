@@ -7,16 +7,29 @@ services:
     environment:
       - FIRMS_MAP_KEY=${FIRMS_MAP_KEY:-}
       - CORS_ORIGINS=http://localhost:5173,http://localhost:80,http://localhost
+      - MODELS_DIR=/app/saved_models
+      - SRC_DIR=/app
     volumes:
       # Mount saved models from the project root
       - ../saved_models:/app/saved_models:ro
       # Mount model source code (needed for torch.load)
-      - ../src:/app/project_src:ro
+      - ../src:/app/src:ro
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 90s
 
   frontend:
     build: ./frontend
     container_name: firespreadnet-frontend
     ports:
-      - "80:80"
+      - "80:8080"
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
+    environment:
+      # nginx entrypoint replaces BACKEND_URL_PLACEHOLDER in nginx.conf at runtime
+      - BACKEND_URL=http://backend:8000
+

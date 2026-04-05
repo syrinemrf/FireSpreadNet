@@ -50,10 +50,10 @@ function MapUpdater({ center, zoom }) {
 }
 
 /* ── Handle map clicks for both declaring and simulating ── */
-function ClickHandler({ onClick, declaring, simulating }) {
+function ClickHandler({ onClick, declaring, simulating, pickingRisk }) {
   useMapEvents({
     click: (e) => {
-      if (declaring || simulating) onClick(e.latlng);
+      if (declaring || simulating || pickingRisk) onClick(e.latlng);
     },
   });
   return null;
@@ -97,6 +97,24 @@ function getSimStyle(hour, feature) {
   };
 }
 
+/* ── Risk overlay styling — amber/orange gradient ── */
+function getRiskStyle(feature) {
+  const risk = feature?.properties?.risk || 0;
+  const level = feature?.properties?.level || "low";
+  let fillColor;
+  if (level === "extreme") fillColor = `rgba(220, 38, 38, ${0.25 + risk * 0.35})`;
+  else if (level === "high") fillColor = `rgba(245, 158, 11, ${0.2 + risk * 0.35})`;
+  else if (level === "moderate") fillColor = `rgba(251, 191, 36, ${0.15 + risk * 0.3})`;
+  else fillColor = `rgba(253, 224, 71, ${0.1 + risk * 0.25})`;
+
+  return {
+    color: "transparent",
+    weight: 0,
+    fillColor: fillColor,
+    fillOpacity: 1,
+  };
+}
+
 export default function MapView({
   center,
   zoom,
@@ -110,6 +128,8 @@ export default function MapView({
   onMapClick,
   onLocate,
   onSimulateActive,
+  riskGeoJson,
+  pickingRisk,
 }) {
   const { t } = useTranslation();
   const [mousePos, setMousePos] = useState(null);
@@ -137,7 +157,7 @@ export default function MapView({
   }, []);
 
   // Determine cursor style
-  const cursorStyle = simulating ? "crosshair" : declaring ? "crosshair" : "grab";
+  const cursorStyle = simulating || declaring || pickingRisk ? "crosshair" : "grab";
 
   return (
     <div className="flex-1 relative">
@@ -150,7 +170,7 @@ export default function MapView({
       >
         <MapRefProvider onRef={(map) => { mapInstanceRef.current = map; }} />
         <MapUpdater center={center} zoom={zoom} />
-        <ClickHandler onClick={onMapClick} declaring={declaring} simulating={simulating} />
+        <ClickHandler onClick={onMapClick} declaring={declaring} simulating={simulating} pickingRisk={pickingRisk} />
         <MousePositionTracker onMove={setMousePos} />
         <ScaleControl position="bottomleft" imperial={false} />
 
@@ -183,14 +203,14 @@ export default function MapView({
           >
             <Popup>
               <div className="text-sm min-w-[180px]">
-                <strong style={{color: getFIRMSColor(f)}}>🔥 Active Fire</strong>
+                <strong style={{color: getFIRMSColor(f)}}>🔥 {t("fires.active_marker")}</strong>
                 <hr style={{borderColor: "#333", margin: "4px 0"}} />
                 <div style={{fontSize: "11px", lineHeight: "1.6"}}>
-                  <div><span style={{color: "#999"}}>Confidence:</span> <span style={{color: getFIRMSColor(f), fontWeight: 600}}>{f.confidence}</span></div>
-                  <div><span style={{color: "#999"}}>Brightness:</span> {(f.bright_ti4 || f.brightness || 0).toFixed(1)}K</div>
-                  <div><span style={{color: "#999"}}>FRP:</span> {(f.frp || 0).toFixed(1)} MW</div>
-                  <div><span style={{color: "#999"}}>Position:</span> {f.latitude.toFixed(4)}, {f.longitude.toFixed(4)}</div>
-                  {f.acq_date && <div><span style={{color: "#999"}}>Detected:</span> {f.acq_date} {f.acq_time}</div>}
+                  <div><span style={{color: "#999"}}>{t("fires.confidence")}:</span> <span style={{color: getFIRMSColor(f), fontWeight: 600}}>{f.confidence}</span></div>
+                  <div><span style={{color: "#999"}}>{t("fires.brightness")}:</span> {(f.bright_ti4 || f.brightness || 0).toFixed(1)}K</div>
+                  <div><span style={{color: "#999"}}>{t("fires.frp")}:</span> {(f.frp || 0).toFixed(1)} MW</div>
+                  <div><span style={{color: "#999"}}>{t("common.position")}:</span> {f.latitude.toFixed(4)}, {f.longitude.toFixed(4)}</div>
+                  {f.acq_date && <div><span style={{color: "#999"}}>{t("fires.detected")}:</span> {f.acq_date} {f.acq_time}</div>}
                 </div>
                 <button
                   onClick={(e) => {
@@ -206,7 +226,7 @@ export default function MapView({
                     minHeight: 40,
                   }}
                 >
-                  ▶ Simulate Spread
+                  ▶ {t("simulation.simulate_fire")}
                 </button>
               </div>
             </Popup>
@@ -218,7 +238,7 @@ export default function MapView({
           <Marker key={`declared-${i}`} position={[f.lat, f.lon]} icon={declaredIcon}>
             <Popup>
               <div className="text-sm">
-                <strong className="text-blue-400">Declared Fire</strong><br />
+                <strong className="text-blue-400">{t("fires.declared_marker")}</strong><br />
                 {f.lat.toFixed(4)}, {f.lon.toFixed(4)}
               </div>
             </Popup>
@@ -228,8 +248,27 @@ export default function MapView({
         {/* Pending declare marker */}
         {pendingDeclare && (
           <Marker position={[pendingDeclare.lat, pendingDeclare.lon]} icon={pendingIcon}>
-            <Popup>Click "Start Simulation" above</Popup>
+            <Popup>{t("declare.click_start_sim")}</Popup>
           </Marker>
+        )}
+
+        {/* Risk GeoJSON overlay */}
+        {riskGeoJson && riskGeoJson.features && riskGeoJson.features.length > 0 && (
+          <GeoJSON
+            key={`risk-${riskGeoJson.features.length}`}
+            data={riskGeoJson}
+            style={getRiskStyle}
+            onEachFeature={(feature, layer) => {
+              const risk = feature.properties?.risk;
+              const level = feature.properties?.level;
+              if (risk) {
+                layer.bindTooltip(
+                  `${t(`risk.level_${level}`)} (${(risk * 100).toFixed(0)}%)`,
+                  { permanent: false, direction: "top", className: "sim-tooltip" }
+                );
+              }
+            }}
+          />
         )}
 
         {/* Simulation GeoJSON — realistic fire polygons */}
@@ -255,7 +294,7 @@ export default function MapView({
         <div className="absolute top-20 left-1/2 -translate-x-1/2 z-[1000] pointer-events-none">
           <div className="bg-fire-600/90 text-white text-[10px] sm:text-xs font-bold px-3 py-1 rounded-full shadow-lg flex items-center gap-1.5 border border-fire-400/50">
             <span className="inline-block w-2 h-2 rounded-full bg-yellow-300 animate-pulse"></span>
-            SIMULATION — H+{currentHour}
+            {t("simulation.badge", { hour: currentHour })}
           </div>
         </div>
       )}
@@ -288,14 +327,18 @@ export default function MapView({
         </div>
       </div>
 
-      {/* FIRMS Legend */}
+      {/* FIRMS Legend — satellite-detected fires */}
       {fires.length > 0 && !simGeoJson && (
-        <div className="absolute bottom-10 left-1 sm:bottom-14 sm:left-2 z-[1000] bg-dark-800/90 backdrop-blur-sm border border-dark-500/50 rounded-lg px-2 sm:px-3 py-2 text-[9px] sm:text-[10px] shadow-lg">
-          <div className="text-gray-300 font-semibold mb-1.5">🔥 NASA FIRMS</div>
+        <div className="absolute bottom-10 left-1 sm:bottom-14 sm:left-2 z-[1000] bg-dark-800/90 backdrop-blur-sm border border-red-900/50 rounded-lg px-2 sm:px-3 py-2 text-[9px] sm:text-[10px] shadow-lg min-w-[130px]">
+          <div className="flex items-center gap-1.5 mb-1.5">
+            <span className="inline-block w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
+            <span className="text-red-300 font-bold tracking-wide">NASA FIRMS</span>
+          </div>
+          <div className="text-gray-500 text-[8px] mb-1.5 leading-tight">{t("fires.firms_legend")}</div>
           <div className="space-y-1">
-            <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full inline-block flex-shrink-0" style={{background: "#ff0000"}}></span><span className="text-gray-400">High</span></div>
-            <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full inline-block flex-shrink-0" style={{background: "#ff6600"}}></span><span className="text-gray-400">Nominal</span></div>
-            <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full inline-block flex-shrink-0" style={{background: "#ffcc00"}}></span><span className="text-gray-400">Low</span></div>
+            <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full inline-block flex-shrink-0" style={{background: "#ff0000", boxShadow: "0 0 4px #ff0000"}}></span><span className="text-gray-400">{t("fires.confidence_high")}</span></div>
+            <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full inline-block flex-shrink-0" style={{background: "#ff6600", boxShadow: "0 0 4px #ff6600"}}></span><span className="text-gray-400">{t("fires.confidence_nominal")}</span></div>
+            <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full inline-block flex-shrink-0" style={{background: "#ffcc00"}}></span><span className="text-gray-400">{t("fires.confidence_low")}</span></div>
           </div>
         </div>
       )}
@@ -303,7 +346,7 @@ export default function MapView({
       {/* Simulation Legend */}
       {simGeoJson && (
         <div className="absolute bottom-10 left-1 sm:bottom-14 sm:left-2 z-[1000] bg-dark-800/90 backdrop-blur-sm border border-dark-500/50 rounded-lg px-2 sm:px-3 py-2 text-[9px] sm:text-[10px] shadow-lg">
-          <div className="text-gray-300 font-semibold mb-1.5">🔥 Simulation</div>
+          <div className="text-gray-300 font-semibold mb-1.5">🔥 {t("simulation.legend_title")}</div>
           <div className="flex items-center gap-0.5">
             <span className="w-4 h-3 inline-block rounded-sm" style={{background: "rgba(255,255,0,0.7)"}}></span>
             <span className="w-4 h-3 inline-block rounded-sm" style={{background: "rgba(255,200,0,0.7)"}}></span>
@@ -313,6 +356,23 @@ export default function MapView({
             <span className="w-4 h-3 inline-block rounded-sm" style={{background: "rgba(153,0,0,0.8)"}}></span>
           </div>
           <div className="flex justify-between text-gray-500 mt-0.5"><span>0h</span><span>24h</span></div>
+        </div>
+      )}
+
+      {/* Risk Legend — AI-predicted, clearly distinct from FIRMS */}
+      {riskGeoJson && riskGeoJson.features && riskGeoJson.features.length > 0 && !simGeoJson && (
+        <div className="absolute bottom-10 left-1 sm:bottom-14 sm:left-2 z-[1000] bg-dark-800/90 backdrop-blur-sm border border-amber-900/50 rounded-lg px-2 sm:px-3 py-2 text-[9px] sm:text-[10px] shadow-lg min-w-[130px]">
+          <div className="flex items-center gap-1.5 mb-1.5">
+            <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
+            <span className="text-amber-300 font-bold tracking-wide">{t("risk.ai_model_badge")}</span>
+          </div>
+          <div className="text-gray-500 text-[8px] mb-1.5 leading-tight">{t("risk.legend")}</div>
+          <div className="space-y-1">
+            <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-sm inline-block flex-shrink-0" style={{background: "rgba(220,38,38,0.7)"}}></span><span className="text-gray-400">{t("risk.level_extreme")}</span></div>
+            <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-sm inline-block flex-shrink-0" style={{background: "rgba(245,158,11,0.6)"}}></span><span className="text-gray-400">{t("risk.level_high")}</span></div>
+            <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-sm inline-block flex-shrink-0" style={{background: "rgba(251,191,36,0.5)"}}></span><span className="text-gray-400">{t("risk.level_moderate")}</span></div>
+            <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-sm inline-block flex-shrink-0" style={{background: "rgba(253,224,71,0.35)"}}></span><span className="text-gray-400">{t("risk.level_low")}</span></div>
+          </div>
         </div>
       )}
     </div>

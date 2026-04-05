@@ -1,5 +1,6 @@
 """Fire spread simulation service — optimised for speed and realism."""
 
+import asyncio
 import uuid
 import numpy as np
 from typing import Optional
@@ -37,11 +38,11 @@ async def create_simulation(lat: float, lon: float, radius_km: float = 2.0) -> d
     circle = (xx ** 2 + yy ** 2) <= r_px ** 2
     fire_mask[circle] = 1.0
 
-    # Fetch real weather (fast, single call ~200ms)
-    weather = await fetch_weather(lat, lon)
-
-    # Fetch elevation grid with spatial variation
-    elevation_grid = await fetch_elevation_grid(lat, lon)
+    # Fetch real weather + elevation grid in parallel (saves ~10s vs sequential)
+    weather, elevation_grid = await asyncio.gather(
+        fetch_weather(lat, lon),
+        fetch_elevation_grid(lat, lon),
+    )
 
     # Simple land mask from elevation (negative = water)
     land_mask = (elevation_grid > -2).astype(np.float32)

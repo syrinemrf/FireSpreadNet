@@ -1,0 +1,40 @@
+# Root-level .dockerignore for Dockerfile.cloudrun (built from project root)
+# Keeps the build context small — only what the backend image needs
+
+# Dev environment
+venv311/
+.venv/
+__pycache__/
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+
+# Frontend (not needed in backend image)
+webapp/frontend/node_modules/
+webapp/frontend/dist/
+webapp/frontend/.dockerignore
+
+# Notebooks and raw data
+notebooks/
+data/
+results/
+RAPPORT_COMPLET.ipynb
+RésultatsRapport.ipynb
+*.ipynb
+
+# Git and editor
+.git/
+.gitignore
+.vscode/
+*.md
+!webapp/backend/README.md
+
+# Env files (secrets injected via Cloud Run env vars)
+.env
+.env.*
+webapp/.env
+webapp/.env.*
+
+# OS
+.DS_Store
+Thumbs.db

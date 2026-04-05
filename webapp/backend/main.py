@@ -9,10 +9,11 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 # Ensure project root is importable for model classes (src.models.*)
-# Use append (not insert) so the backend's config.py takes precedence
-PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
-if str(PROJECT_ROOT) not in sys.path:
-    sys.path.append(str(PROJECT_ROOT))
+# SRC_DIR env var lets Docker/Cloud Run override the Python import root.
+import os as _os
+_SRC_DIR = _os.getenv("SRC_DIR", str(Path(__file__).resolve().parent.parent.parent))
+if _SRC_DIR not in sys.path:
+    sys.path.append(_SRC_DIR)
 
 from config import CORS_ORIGINS
 from services.model_service import model_service

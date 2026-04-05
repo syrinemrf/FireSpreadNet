@@ -1,0 +1,97 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">
+  <defs>
+    <radialGradient id="globe-bg" cx="38%" cy="35%" r="70%">
+      <stop offset="0%" stop-color="#1a4a6e"/>
+      <stop offset="100%" stop-color="#071a2e"/>
+    </radialGradient>
+    <radialGradient id="flame-outer" cx="50%" cy="90%" r="80%">
+      <stop offset="0%"   stop-color="#fde68a"/>
+      <stop offset="30%"  stop-color="#f97316"/>
+      <stop offset="75%"  stop-color="#dc2626"/>
+      <stop offset="100%" stop-color="#dc2626" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="flame-inner" cx="50%" cy="90%" r="70%">
+      <stop offset="0%"  stop-color="#ffffff"/>
+      <stop offset="40%" stop-color="#fde68a"/>
+      <stop offset="100%" stop-color="#f97316" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="1.5" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- ── Globe base circle ── -->
+  <circle cx="60" cy="60" r="50" fill="url(#globe-bg)"/>
+
+  <!-- ── Globe meridian arcs ── -->
+  <path d="M60 10 Q42 35 42 60 Q42 85 60 110" fill="none" stroke="#22d3ee" stroke-width="0.8" opacity="0.35"/>
+  <path d="M60 10 Q78 35 78 60 Q78 85 60 110" fill="none" stroke="#22d3ee" stroke-width="0.8" opacity="0.35"/>
+  <path d="M60 10 Q25 30 18 60 Q25 90 60 110"  fill="none" stroke="#22d3ee" stroke-width="0.8" opacity="0.25"/>
+  <path d="M60 10 Q95 30 102 60 Q95 90 60 110" fill="none" stroke="#22d3ee" stroke-width="0.8" opacity="0.25"/>
+
+  <!-- ── Latitude parallels ── -->
+  <ellipse cx="60" cy="38" rx="34" ry="9"  fill="none" stroke="#22d3ee" stroke-width="0.7" opacity="0.30"/>
+  <ellipse cx="60" cy="60" rx="50" ry="14" fill="none" stroke="#22d3ee" stroke-width="0.7" opacity="0.30"/>
+  <ellipse cx="60" cy="82" rx="34" ry="9"  fill="none" stroke="#22d3ee" stroke-width="0.7" opacity="0.28"/>
+
+  <!-- ── Outer orbit ring ── -->
+  <ellipse cx="60" cy="60" rx="62" ry="21"
+    fill="none" stroke="#06b6d4" stroke-width="1.6" opacity="0.70"
+    transform="rotate(-22 60 60)"/>
+
+  <!-- Orbit node dots (4 cardinal points of the ring) -->
+  <circle cx="11" cy="48" r="3.2" fill="#22d3ee" filter="url(#glow)"/>
+  <circle cx="109" cy="72" r="3.2" fill="#22d3ee" filter="url(#glow)"/>
+  <circle cx="49" cy="99" r="2.4" fill="#22d3ee" opacity="0.8"/>
+  <circle cx="71" cy="21" r="2.4" fill="#22d3ee" opacity="0.8"/>
+
+  <!-- Small connecting lines between orbit nodes -->
+  <line x1="11" y1="48" x2="23" y2="52" stroke="#22d3ee" stroke-width="0.8" opacity="0.5"/>
+  <line x1="109" y1="72" x2="97" y2="68" stroke="#22d3ee" stroke-width="0.8" opacity="0.5"/>
+
+  <!-- ── Globe border ── -->
+  <circle cx="60" cy="60" r="50" fill="none" stroke="#22d3ee" stroke-width="1.8" opacity="0.75"/>
+
+  <!-- ── Pine trees silhouette (bottom of globe) ── -->
+  <g fill="#0a1f0d" opacity="0.85">
+    <!-- Left cluster -->
+    <polygon points="22,95 26,82 30,95"/>
+    <polygon points="19,92 26,76 33,92"/>
+    <polygon points="17,95 26,70 35,95"/>
+    <!-- Center cluster -->
+    <polygon points="52,96 56,83 60,96"/>
+    <polygon points="49,93 56,77 63,93"/>
+    <polygon points="46,96 56,71 66,96"/>
+    <!-- Right cluster -->
+    <polygon points="90,95 94,82 98,95"/>
+    <polygon points="87,92 94,76 101,92"/>
+    <polygon points="85,95 94,70 103,95"/>
+  </g>
+
+  <!-- ── Central flame ── -->
+  <!-- Outer flame body -->
+  <path d="M60 76
+    C51 68 47 57 49 46
+    C51 37 55 31 58 24
+    C60 29 63 34 65 39
+    C68 32 67 25 63 18
+    C67 23 72 31 73 41
+    C75 50 72 62 63 70
+    C66 63 67 55 65 48
+    C64 56 62 65 60 76 Z"
+    fill="url(#flame-outer)"/>
+
+  <!-- Inner bright core -->
+  <path d="M60 76
+    C55 70 53 63 54 55
+    C55 48 58 43 60 37
+    C62 43 65 48 66 55
+    C67 62 65 70 60 76 Z"
+    fill="url(#flame-inner)" opacity="0.95"/>
+
+  <!-- Hot white tip -->
+  <path d="M60 76 C58 70 57 64 58 58 C59 53 60 50 60 47
+           C60 50 61 53 62 58 C63 64 62 70 60 76 Z"
+    fill="white" opacity="0.65"/>
+</svg>

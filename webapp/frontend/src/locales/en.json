@@ -4,14 +4,25 @@
   "sidebar": {
     "active_fires": "Active Fires",
     "declare_fire": "Declare Fire",
+    "risk": "Fire Risk",
     "simulation": "Simulation",
     "explainability": "Explainability",
-    "about": "About"
+    "about": "About",
+    "group_monitor": "Monitor",
+    "group_respond": "Respond",
+    "group_analyze": "Analyze",
+    "group_info": "Info",
+    "model_online": "Models Online",
+    "collapse": "Collapse",
+    "expand": "Expand"
   },
   "map": {
     "search_placeholder": "Search location...",
     "zoom_to_location": "Zoom to my location",
-    "click_to_declare": "Click on the map to declare a fire"
+    "click_to_declare": "Click on the map to declare a fire",
+    "click_to_simulate": "Click on the map to start a fire simulation",
+    "position": "Position",
+    "coordinates": "Coordinates"
   },
   "fires": {
     "active_title": "Active Fires (FIRMS)",
@@ -22,7 +33,37 @@
     "brightness": "Brightness",
     "frp": "Fire Radiative Power",
     "detected": "Detected",
-    "source": "Source"
+    "source": "Source",
+    "active_marker": "Active Fire",
+    "declared_marker": "Declared Fire",
+    "confidence_high": "High",
+    "confidence_nominal": "Nominal",
+    "confidence_low": "Low",
+    "firms_legend": "NASA FIRMS — Active Fires"
+  },
+  "risk": {
+    "title": "Fire Risk Assessment",
+    "loading": "Analyzing fire risk...",
+    "click_to_pick": "Click on the map to assess fire risk at that location",
+    "ai_model_badge": "AI Risk Model",
+    "level_extreme": "Extreme Risk",
+    "level_high": "High Risk",
+    "level_moderate": "Moderate Risk",
+    "level_low": "Low Risk",
+    "score": "Risk Score",
+    "analyze": "Analyze Risk",
+    "clear": "Clear Risk",
+    "legend": "Fire Risk Index",
+    "factors": "Contributing Factors",
+    "factor_temperature": "Temperature",
+    "factor_humidity": "Humidity",
+    "factor_wind": "Wind",
+    "factor_precipitation": "Precipitation",
+    "impact_high": "high",
+    "impact_moderate": "moderate",
+    "impact_low": "low",
+    "description": "Fire risk assessment based on current weather conditions, terrain, and vegetation.",
+    "weather_conditions": "Current Conditions"
   },
   "declare": {
     "title": "Declare a Fire",
@@ -31,11 +72,14 @@
     "lon": "Longitude",
     "radius_km": "Initial radius (km)",
     "start_simulation": "Start Simulation",
-    "cancel": "Cancel"
+    "confirm": "Confirm Fire",
+    "cancel": "Cancel",
+    "click_start_sim": "Click \"Start Simulation\" above"
   },
   "simulation": {
     "title": "Fire Spread Simulation",
-    "running": "Simulation running...",
+    "running": "Simulating fire spread...",
+    "computing": "Computing fire spread...",
     "hour": "Hour",
     "hours": "hours",
     "step": "Advance 1 hour",
@@ -48,7 +92,10 @@
     "speed": "Spread speed",
     "explain": "Explain",
     "no_simulation": "No active simulation. Declare a fire to start.",
-    "simulate_fire": "Simulate Spread"
+    "simulate_fire": "Simulate Spread",
+    "badge": "SIMULATION — H+{{hour}}",
+    "legend_title": "Simulation — Fire Spread",
+    "click_to_start": "Click on the map to start a fire simulation"
   },
   "explain": {
     "title": "Prediction Explainability",
@@ -57,7 +104,22 @@
     "feature": "Feature",
     "importance": "Importance (%)",
     "summary": "Summary",
-    "no_data": "Run a simulation first to see explainability data."
+    "no_data": "Run a simulation first to see explainability data.",
+    "model": "Model",
+    "features": {
+      "prev_fire_mask": "Previous Fire",
+      "wind_speed": "Wind Speed",
+      "wind_direction": "Wind Direction",
+      "max_temp": "Max Temperature",
+      "min_temp": "Min Temperature",
+      "humidity": "Humidity",
+      "drought_index": "Drought Index",
+      "ndvi": "Vegetation (NDVI)",
+      "elevation": "Elevation",
+      "erc": "Energy Release",
+      "precipitation": "Precipitation",
+      "population": "Population"
+    }
   },
   "about": {
     "title": "About FireSpreadNet",
@@ -77,11 +139,42 @@
     "credits_text": "Developed as part of a Machine Learning research project on wildfire prediction. Based on the Next Day Wildfire Spread dataset (Huot et al., 2022).",
     "close": "Close"
   },
+  "welcome": {
+    "title": "Welcome to FireSpreadNet",
+    "subtitle": "Your wildfire monitoring and prediction platform",
+    "layer_fires": "Active Fires",
+    "layer_fires_desc": "Real-time fire detections from NASA FIRMS satellites",
+    "layer_risk": "Fire Risk",
+    "layer_risk_desc": "AI-predicted fire ignition probability based on conditions",
+    "layer_sim": "Simulation",
+    "layer_sim_desc": "Simulate fire spread up to 24 hours ahead",
+    "got_it": "Got It",
+    "dont_show": "Don't show again"
+  },
+  "tips": {
+    "emergency": "EMERGENCY",
+    "title": "Fire Declared — Emergency Actions",
+    "subtitle": "A fire has been reported at this location. Take immediate action.",
+    "call_emergency_title": "Call Emergency Services",
+    "call_emergency_desc": "Immediately call 112 (EU), 18 (fire brigade) or local emergency services. Provide your exact GPS coordinates.",
+    "evacuate_title": "Evacuate the Area",
+    "evacuate_desc": "Leave the area immediately. Move upwind and uphill away from the fire. Do not return until authorities say it is safe.",
+    "alert_neighbors_title": "Alert Neighbors",
+    "alert_neighbors_desc": "Warn nearby residents and help those who may need assistance evacuating. Use all communication channels available.",
+    "no_vehicles_title": "Avoid Congestion",
+    "no_vehicles_desc": "Leave roads clear for emergency vehicles. Only use your car if you cannot leave on foot. Close all windows while driving.",
+    "stay_informed_title": "Stay Informed",
+    "stay_informed_desc": "Monitor official alerts via radio, government apps, or local authorities. Follow all instructions from emergency services.",
+    "emergency_numbers": "Emergency Numbers",
+    "simulate_cta": "Simulate Fire Spread from Here",
+    "close_panel": "Dismiss"
+  },
   "common": {
     "loading": "Loading...",
     "error": "An error occurred",
     "retry": "Retry",
     "close": "Close",
-    "ok": "OK"
+    "ok": "OK",
+    "position": "Position"
   }
 }

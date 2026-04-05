@@ -5,13 +5,16 @@ import Sidebar from "./components/Sidebar";
 import TopBar from "./components/TopBar";
 import SimulationPanel from "./components/SimulationPanel";
 import ExplainPanel from "./components/ExplainPanel";
+import RiskPanel from "./components/RiskPanel";
+import FireTipsPanel from "./components/FireTipsPanel";
 import AboutModal from "./components/AboutModal";
+import WelcomeGuide from "./components/WelcomeGuide";
 import api from "./services/api";
 import useGeolocation from "./hooks/useGeolocation";
 
 export default function App() {
   const { t } = useTranslation();
-  const { position: geoPos, locate } = useGeolocation();
+  const { position: geoPos, error: geoError, locate } = useGeolocation();
 
   /* ── state ─────────────────────────────── */
   const [fires, setFires] = useState([]);
@@ -23,8 +26,16 @@ export default function App() {
   const [simGeoJson, setSimGeoJson] = useState(null);
   const [currentHour, setCurrentHour] = useState(0);
   const [explainData, setExplainData] = useState(null);
+  const [riskData, setRiskData] = useState(null);
+  const [riskLoading, setRiskLoading] = useState(false);
+  const [pickingRisk, setPickingRisk] = useState(false);
+  const [showFireTips, setShowFireTips] = useState(false);
+  const [fireTipsLocation, setFireTipsLocation] = useState(null);
   const [activePanel, setActivePanel] = useState("fires");
   const [showAbout, setShowAbout] = useState(false);
+  const [showWelcome, setShowWelcome] = useState(() => {
+    return !localStorage.getItem("fsn_welcome_dismissed");
+  });
   const [mapCenter, setMapCenter] = useState([20, -10]);
   const [mapZoom, setMapZoom] = useState(3);
   const [loading, setLoading] = useState(false);
@@ -54,7 +65,6 @@ export default function App() {
   const handleMapClick = useCallback(
     (latlng) => {
       if (simulating) {
-        // Direct simulation mode — click map to start simulation immediately
         startSimulation(latlng.lat, latlng.lng, 1.0);
         return;
       }
@@ -62,8 +72,30 @@ export default function App() {
         setPendingDeclare({ lat: latlng.lat, lon: latlng.lng, radius_km: 1.0 });
         return;
       }
+      if (pickingRisk) {
+        setPickingRisk(false);
+        setRiskLoading(true);
+        setErrorMsg(null);
+        // Fly to the picked location at ~1km altitude (zoom 15)
+        setMapCenter([latlng.lat, latlng.lng]);
+        setMapZoom(15);
+        api.post("/api/fires/risk", {
+            latitude: latlng.lat,
+            longitude: latlng.lng,
+            radius_km: 32,
+          }).then((resp) => {
+            setRiskData(resp.data);
+            setActivePanel("risk");
+            setSidebarOpen(false);
+          }).catch((err) => {
+            const msg = err.response?.data?.detail || err.message;
+            setErrorMsg(msg);
+            setTimeout(() => setErrorMsg(null), 5000);
+          }).finally(() => setRiskLoading(false));
+        return;
+      }
     },
-    [declaring, simulating]
+    [declaring, simulating, pickingRisk]
   );
 
   const confirmDeclare = useCallback(async () => {
@@ -77,7 +109,14 @@ export default function App() {
         lon: pendingDeclare.lon,
         radius_km: pendingDeclare.radius_km,
       });
-      setDeclaredFires((prev) => [...prev, { ...resp.data.fire, lat: pendingDeclare.lat, lon: pendingDeclare.lon }]);
+      const newFire = { ...resp.data.fire, lat: pendingDeclare.lat, lon: pendingDeclare.lon };
+      setDeclaredFires((prev) => [...prev, newFire]);
+      // Fly to declared fire location at 1km altitude (zoom 15)
+      setMapCenter([pendingDeclare.lat, pendingDeclare.lon]);
+      setMapZoom(15);
+      // Show emergency tips panel
+      setFireTipsLocation({ lat: pendingDeclare.lat, lon: pendingDeclare.lon });
+      setShowFireTips(true);
       setPendingDeclare(null);
       setDeclaring(false);
     } catch (err) {
@@ -105,6 +144,7 @@ export default function App() {
       setDeclaring(false);
       setSimulating(false);
       setSidebarOpen(false);
+      setRiskData(null);
       // Center map on simulation
       setMapCenter([lat, lon]);
       setMapZoom(11);
@@ -139,6 +179,9 @@ export default function App() {
         setCurrentHour(resp.data.current_hour);
       } catch (err) {
         console.error("Step error:", err);
+        const msg = err.response?.data?.detail || err.message;
+        setErrorMsg(t("step_error", { defaultValue: "Erreur lors de l'avancement : " + msg }));
+        setTimeout(() => setErrorMsg(null), 5000);
       } finally {
         setSimLoading(false);
       }
@@ -164,6 +207,20 @@ export default function App() {
     }
   }, [simulation]);
 
+  const fetchRisk = useCallback(async () => {
+    // Enter picking mode — user clicks on the map to choose location
+    setPickingRisk(true);
+    if (declaring) setDeclaring(false);
+    if (simulating) setSimulating(false);
+    setSidebarOpen(false);
+  }, [declaring, simulating]);
+
+  const clearRisk = useCallback(() => {
+    setRiskData(null);
+    setPickingRisk(false);
+    setActivePanel("fires");
+  }, []);
+
   const resetSimulation = useCallback(() => {
     setSimulation(null);
     setSimGeoJson(null);
@@ -173,22 +230,23 @@ export default function App() {
   }, []);
 
   /* ── geolocation ───────────────────────── */
-  const handleLocate = useCallback(() => {
-    locate();
+  useEffect(() => {
     if (geoPos) {
       setMapCenter([geoPos.lat, geoPos.lon]);
-      setMapZoom(12);
-    } else {
-      navigator.geolocation?.getCurrentPosition(
-        (pos) => {
-          setMapCenter([pos.coords.latitude, pos.coords.longitude]);
-          setMapZoom(12);
-        },
-        () => {},
-        { enableHighAccuracy: true, timeout: 10000 }
-      );
+      setMapZoom(15);
     }
-  }, [locate, geoPos]);
+  }, [geoPos]);
+
+  useEffect(() => {
+    if (geoError) {
+      setErrorMsg(t("geo_error", { defaultValue: "Localisation impossible : " + geoError }));
+      setTimeout(() => setErrorMsg(null), 5000);
+    }
+  }, [geoError, t]);
+
+  const handleLocate = useCallback(() => {
+    locate();
+  }, [locate]);
 
   /* ── search location ───────────────────── */
   const handleSearch = useCallback(async (query) => {
@@ -199,28 +257,27 @@ export default function App() {
       const data = await resp.json();
       if (data.length > 0) {
         setMapCenter([parseFloat(data[0].lat), parseFloat(data[0].lon)]);
-        setMapZoom(10);
+        setMapZoom(13);
       }
     } catch {
       /* ignore geocoding errors */
     }
   }, []);
 
+  const dismissWelcome = useCallback((dontShowAgain) => {
+    setShowWelcome(false);
+    if (dontShowAgain) {
+      localStorage.setItem("fsn_welcome_dismissed", "1");
+    }
+  }, []);
+
   /* ── active interaction mode label ─────── */
-  const interactionMode = simulating ? "simulation" : declaring ? "declare" : null;
+  const interactionMode = simulating ? "simulation" : declaring ? "declare" : pickingRisk ? "risk" : null;
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-dark-900">
-      {/* Mobile menu toggle */}
-      <button
-        className="fixed top-3 left-3 z-[1100] sm:hidden w-10 h-10 bg-dark-700 border border-dark-400 rounded-lg flex items-center justify-center text-white shadow-lg"
-        onClick={() => setSidebarOpen(!sidebarOpen)}
-      >
-        {sidebarOpen ? "✕" : "☰"}
-      </button>
-
-      {/* Sidebar */}
-      <div className={`${sidebarOpen ? "translate-x-0" : "-translate-x-full"} sm:translate-x-0 fixed sm:relative z-[1050] transition-transform duration-200`}>
+      {/* Sidebar — slides in from left on mobile, always visible on desktop */}
+      <div className={`${sidebarOpen ? "translate-x-0" : "-translate-x-full"} sm:translate-x-0 fixed sm:relative z-[1050] h-full transition-transform duration-300 ease-in-out`}>
         <Sidebar
           activePanel={activePanel}
           setActivePanel={(p) => { setActivePanel(p); setSidebarOpen(false); }}
@@ -231,19 +288,29 @@ export default function App() {
           setShowAbout={setShowAbout}
           onLoadFires={loadFires}
           onExplain={fetchExplainability}
+          onRisk={fetchRisk}
+          onClearRisk={clearRisk}
           fireCount={fires.length}
           hasSimulation={!!simulation}
+          hasRisk={!!riskData}
+          riskLoading={riskLoading}
+          pickingRisk={pickingRisk}
+          onMobileClose={() => setSidebarOpen(false)}
         />
       </div>
 
-      {/* Mobile overlay backdrop */}
+      {/* Mobile backdrop — tap outside to close */}
       {sidebarOpen && (
-        <div className="fixed inset-0 bg-black/50 z-[1040] sm:hidden" onClick={() => setSidebarOpen(false)} />
+        <div className="fixed inset-0 bg-black/60 z-[1040] sm:hidden" onClick={() => setSidebarOpen(false)} />
       )}
 
       {/* Main area */}
       <div className="flex-1 flex flex-col relative">
-        <TopBar onSearch={handleSearch} />
+        <TopBar
+          onSearch={handleSearch}
+          onMenuToggle={() => setSidebarOpen(!sidebarOpen)}
+          sidebarOpen={sidebarOpen}
+        />
 
         {/* Map */}
         <MapView
@@ -259,13 +326,15 @@ export default function App() {
           onMapClick={handleMapClick}
           onLocate={handleLocate}
           onSimulateActive={simulateActiveFire}
+          riskGeoJson={riskData?.geojson}
+          pickingRisk={pickingRisk}
         />
 
         {/* Loading indicator */}
         {loading && fires.length === 0 && (
           <div className="absolute top-20 left-1/2 -translate-x-1/2 z-[1200] bg-dark-700/95 backdrop-blur text-white text-xs sm:text-sm px-4 py-2 rounded-xl shadow-lg border border-dark-400/50 flex items-center gap-2">
             <span className="inline-block w-3 h-3 border-2 border-fire-400 border-t-transparent rounded-full animate-spin"></span>
-            Loading active fires...
+            {t("fires.loading")}
           </div>
         )}
 
@@ -273,7 +342,15 @@ export default function App() {
         {simLoading && (
           <div className="absolute top-20 left-1/2 -translate-x-1/2 z-[1200] bg-dark-700/95 backdrop-blur text-white text-xs sm:text-sm px-4 py-2 rounded-xl shadow-lg border border-fire-500/50 flex items-center gap-2">
             <span className="inline-block w-3 h-3 border-2 border-fire-400 border-t-transparent rounded-full animate-spin"></span>
-            🔥 Simulating fire spread...
+            {t("simulation.running")}
+          </div>
+        )}
+
+        {/* Risk loading overlay */}
+        {riskLoading && (
+          <div className="absolute top-20 left-1/2 -translate-x-1/2 z-[1200] bg-dark-700/95 backdrop-blur text-white text-xs sm:text-sm px-4 py-2 rounded-xl shadow-lg border border-amber-500/50 flex items-center gap-2">
+            <span className="inline-block w-3 h-3 border-2 border-amber-400 border-t-transparent rounded-full animate-spin"></span>
+            {t("risk.loading")}
           </div>
         )}
 
@@ -287,10 +364,16 @@ export default function App() {
         {/* Simulation pick mode overlay */}
         {simulating && (
           <div className="absolute top-16 left-1/2 -translate-x-1/2 z-[1000] bg-dark-700/95 backdrop-blur px-4 sm:px-6 py-2 sm:py-3 rounded-xl border border-green-500/30 shadow-lg flex flex-wrap items-center justify-center gap-2 sm:gap-4 max-w-[95vw]">
-            <span className="text-green-400 text-xs sm:text-sm font-medium">🔥 Click on the map to start a fire simulation</span>
-            <button onClick={() => setSimulating(false)} className="text-gray-400 hover:text-white text-sm">
-              ✕
-            </button>
+            <span className="text-green-400 text-xs sm:text-sm font-medium">{t("simulation.click_to_start")}</span>
+            <button onClick={() => setSimulating(false)} className="text-gray-400 hover:text-white text-sm">✕</button>
+          </div>
+        )}
+
+        {/* Risk pick mode overlay */}
+        {pickingRisk && (
+          <div className="absolute top-16 left-1/2 -translate-x-1/2 z-[1000] bg-dark-700/95 backdrop-blur px-4 sm:px-6 py-2 sm:py-3 rounded-xl border border-amber-500/30 shadow-lg flex flex-wrap items-center justify-center gap-2 sm:gap-4 max-w-[95vw]">
+            <span className="text-amber-300 text-xs sm:text-sm font-medium">⚑ {t("risk.click_to_pick")}</span>
+            <button onClick={() => setPickingRisk(false)} className="text-gray-400 hover:text-white text-sm">✕</button>
           </div>
         )}
 
@@ -303,8 +386,8 @@ export default function App() {
                 <span className="text-[10px] sm:text-xs text-gray-400">
                   {pendingDeclare.lat.toFixed(4)}, {pendingDeclare.lon.toFixed(4)}
                 </span>
-                <button onClick={() => { confirmDeclare(); startSimFromPending(); }} className="px-3 py-1 bg-fire-600 text-white rounded-lg text-xs hover:bg-fire-500 transition">
-                  ▶ {t("declare.start_simulation")}
+                <button onClick={confirmDeclare} className="px-3 py-1 bg-fire-600 text-white rounded-lg text-xs hover:bg-fire-500 transition">
+                  ▶ {t("declare.confirm")}
                 </button>
               </>
             )}
@@ -331,10 +414,27 @@ export default function App() {
         {activePanel === "explain" && explainData && (
           <ExplainPanel data={explainData} onClose={() => setActivePanel(simulation ? "simulation" : "fires")} />
         )}
+
+        {/* Risk panel */}
+        {activePanel === "risk" && riskData && (
+          <RiskPanel data={riskData} onClose={clearRisk} onSimulate={(lat, lon) => startSimulation(lat, lon, 1.0)} />
+        )}
+
+        {/* Fire tips panel — shown after declaring a fire */}
+        {showFireTips && fireTipsLocation && (
+          <FireTipsPanel
+            location={fireTipsLocation}
+            onSimulate={() => { setShowFireTips(false); startSimulation(fireTipsLocation.lat, fireTipsLocation.lon, 1.0); }}
+            onClose={() => setShowFireTips(false)}
+          />
+        )}
       </div>
 
       {/* About modal */}
       {showAbout && <AboutModal onClose={() => setShowAbout(false)} />}
+
+      {/* Welcome guide */}
+      {showWelcome && <WelcomeGuide onDismiss={dismissWelcome} />}
     </div>
   );
 }

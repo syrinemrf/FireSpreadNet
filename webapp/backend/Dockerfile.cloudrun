@@ -1,0 +1,63 @@
+# ── FireSpreadNet Backend — Cloud Run Dockerfile ──────────────────────────────
+# Build context: PROJECT ROOT  (FireForest/)
+#   docker build -f webapp/backend/Dockerfile.cloudrun -t IMAGE .
+# ─────────────────────────────────────────────────────────────────────────────
+
+# ── Stage 1: Python dependency installer ─────────────────────────────────────
+FROM python:3.11-slim AS deps
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential && \
+    rm -rf /var/lib/apt/lists/*
+
+WORKDIR /install
+
+# CPU-only PyTorch first (separate layer — only re-runs if torch version changes)
+RUN pip install --no-cache-dir \
+    torch==2.2.2 torchvision==0.17.2 \
+    --index-url https://download.pytorch.org/whl/cpu
+
+# App dependencies (excluding torch lines, already installed)
+COPY webapp/backend/requirements.txt .
+RUN grep -vE "^torch|^torchvision" requirements.txt \
+    | pip install --no-cache-dir -r /dev/stdin
+
+# ── Stage 2: Lean runtime image ───────────────────────────────────────────────
+FROM python:3.11-slim AS runtime
+
+# curl for HEALTHCHECK; no build tools needed at runtime
+RUN apt-get update && apt-get install -y --no-install-recommends curl && \
+    rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Copy installed packages from deps stage (no pip in this layer)
+COPY --from=deps /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+COPY --from=deps /usr/local/bin /usr/local/bin
+
+# Copy application code
+COPY webapp/backend/ /app/
+COPY src/             /app/src/
+COPY saved_models/    /app/saved_models/
+
+# Runtime env vars
+ENV MODELS_DIR=/app/saved_models
+ENV SRC_DIR=/app
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONPATH=/app
+
+# Non-root user
+RUN groupadd -g 1001 appgroup && \
+    useradd -u 1001 -g appgroup -M -s /bin/false appuser && \
+    chown -R appuser:appgroup /app
+USER appuser
+
+EXPOSE 8080
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=90s --retries=3 \
+    CMD curl -f "http://localhost:${PORT:-8080}/api/health" || exit 1
+
+# Cloud Run sets PORT=8080 — uvicorn reads it at startup
+CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port ${PORT:-8080} --workers 1 --log-level info"]
+

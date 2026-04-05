@@ -7,8 +7,9 @@ from dotenv import load_dotenv
 load_dotenv()
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
-MODELS_DIR = PROJECT_ROOT / "saved_models"
-SETUP_CONFIG_PATH = PROJECT_ROOT / "notebooks" / "setup_config.json"
+# MODELS_DIR can be overridden at runtime (e.g. inside Docker / Cloud Run)
+MODELS_DIR = Path(os.getenv("MODELS_DIR", str(PROJECT_ROOT / "saved_models")))
+SETUP_CONFIG_PATH = Path(os.getenv("SETUP_CONFIG_PATH", str(PROJECT_ROOT / "notebooks" / "setup_config.json")))
 
 FIRMS_MAP_KEY = os.getenv("FIRMS_MAP_KEY", "")
 OPEN_METEO_BASE = "https://api.open-meteo.com/v1/forecast"

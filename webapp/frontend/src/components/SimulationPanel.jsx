@@ -139,7 +139,7 @@ export default function SimulationPanel({
         {loading && (
           <div className="mt-2 flex items-center justify-center gap-2 text-[10px] sm:text-xs text-fire-400">
             <Loader className="w-3 h-3 animate-spin" />
-            Computing fire spread...
+            {t("simulation.computing")}
           </div>
         )}
       </div>
