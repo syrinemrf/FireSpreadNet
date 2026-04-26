@@ -193,7 +193,7 @@ The multimodal trend in wildfire geospatial learning, where heterogeneous satell
 \subsection{Dataset and Problem Formulation}
 
 The most important single prior work for this report is the benchmark introduced by \citet{huot2022next}, published in IEEE Transactions on Geoscience and Remote Sensing.
-That contribution makes three enduring contributions to the field.
+That work makes three enduring contributions to the field.
 
 First, it introduces the \textit{Next Day Wildfire Spread} dataset — a geographically stratified, temporally coherent collection of 18,545 labelled wildfire events from the contiguous United States, split into 14,979 training, 1,877 validation, and 1,689 test samples under a strict geographic (non-overlapping region) partition that prevents spatial leakage.
 The geographic split is critical for scientific validity: a random pixel split would permit the model to memorise local landscape textures from training patches that overlap geographically with test patches, inflating test metrics and producing optimistic performance estimates that do not transfer to unseen fire regions.
@@ -334,7 +334,7 @@ Any architecture that treats all spatial locations equally wastes representation
 The Convolutional Block Attention Module (CBAM) \citep{woo2018cbam} provides a technically well-motivated channel-and-spatial attention mechanism that can be inserted into any convolutional backbone with negligible parameter overhead.
 CBAM applies sequential channel attention (which of the 12 input channels matter most?) and spatial attention (where in the 64$\times$64 grid should the model focus?), producing a dual-axis re-weighting that matches the dual structure of the wildfire prediction problem.
 
-The comparative study by \citet{shadrin2024comparative} (Journal of Geophysical Research: Machine Learning and Computing, 2025) provides the most systematic recent evidence on CNN versus Transformer architectures for wildfire spread prediction.
+The comparative study by \citet{shadrin2024comparative} (Journal of Geophysical Research: Machine Learning and Computation, 2025) provides the most systematic recent evidence on CNN versus Transformer architectures for wildfire spread prediction.
 Their key finding — that CNN-based models with explicit spatial attention remain competitive with or superior to Swin Transformer variants on limited-resolution satellite datasets — directly informs our decision to prioritise attention-enhanced U-Net over more parameter-heavy Transformer architectures.
 Given the hardware constraints of this study (NVIDIA GTX 1050, 3\,GB VRAM), this architectural preference is both empirically and practically motivated.
 
