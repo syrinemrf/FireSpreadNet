@@ -1,0 +1,517 @@
+%% ============================================================
+%%  Chapter 2 — State of the Art
+%%  FireSpreadNet Research Report
+%%  Author: Syrine M. F.
+%%  Last updated: April 2026
+%% ============================================================
+
+\chapter{State of the Art}
+\label{chap:sota}
+
+Wildfire spread prediction has attracted sustained research attention from the physical modelling, remote-sensing, and machine-learning communities.
+This chapter organises the existing literature into six thematic areas — physical models, remote-sensing data, the reference benchmark, deep-learning architectures, physics-informed machine learning, and explainability — and argues from each area toward the specific design choices made in FireSpreadNet.
+The chapter closes with a synthesis table and a formal statement of the research gaps that this work addresses.
+
+%% ------------------------------------------------------------------
+\section{Wildfire Behaviour and Physical Models}
+\label{sec:sota_physics}
+%% ------------------------------------------------------------------
+
+\subsection{Rothermel's Rate-of-Spread Model}
+
+Physical modelling of wildfire spread has been dominated for five decades by the semi-empirical framework introduced by \citet{rothermel1972mathematical}.
+Rothermel's model derives the rate of spread $R$ as a function of the reaction intensity $I_R$, a propagating flux ratio $\xi$, and dimensionless wind and slope multipliers $\phi_w$ and $\phi_s$, corrected by the bulk density $\rho_b$, the effective heating number $\epsilon$, and the heat of pre-ignition $Q_{ig}$:
+
+\begin{equation}
+    R = \frac{I_R \,\xi\,(1 + \phi_w + \phi_s)}{\rho_b\,\epsilon\,Q_{ig}}
+    \label{eq:rothermel}
+\end{equation}
+
+This formulation captures the three dominant drivers of ground-level fire spread — fuel properties, wind, and slope — and remains the mechanistic backbone of operational tools deployed by wildfire agencies worldwide.
+Operational systems such as FARSITE extend Rothermel's logic into landscape-scale two-dimensional simulation by propagating fire perimeters across heterogeneous terrain and fuel mosaics \citep{finney1998farsite}.
+Cellular Automata (CA) models further discretise the landscape into grid cells and implement simplified spread rules derived from the same Rothermel dynamics; their appeal lies in transparency, interpretability, and computational simplicity at fine spatial resolutions.
+
+\subsection{Limitations of Physics-Only and Rule-Based Approaches}
+
+Despite their mechanistic elegance, physics-only and rule-based systems face four well-documented limitations that prevent them from serving as reliable operational forecasting tools at large scale.
+
+\begin{enumerate}
+    \item \textbf{Deterministic assumptions.}
+          Both Rothermel-derived simulators and CA models produce deterministic spread predictions: for a given set of inputs, a single trajectory is generated.
+          Real fire perimeters evolve stochastically under turbulent wind fields and spatially heterogeneous fuels that no gridded model can fully resolve \citep{singh2024physmlreview}.
+          Deterministic rules produce binary spread predictions that cannot capture the probabilistic, heterogeneous nature of real fire perimeter evolution.
+
+    \item \textbf{Limited dynamic data assimilation.}
+          FARSITE and CA require manually prescribed fuel maps, weather streams, and ignition points; they cannot assimilate new satellite observations mid-simulation.
+          In an age of near-real-time MODIS and VIIRS fire detections, this rigidity represents a structural disadvantage relative to learning-based methods that ingest live observational feeds.
+
+    \item \textbf{Parameter sensitivity and calibration burden.}
+          Rothermel parameters (fuel moisture content, bulk density, surface-to-volume ratio) vary continuously in space and time.
+          Miscalibration of any one parameter degrades rate-of-spread estimates in ways that are difficult to detect without ground-truth perimeter data.
+
+    \item \textbf{Scalability and heterogeneity.}
+          Under heterogeneous weather-terrain interactions — for example, narrow channeling winds in complex topography — rule-based models systematically underestimate or overestimate spread because their neighbourhood interaction rules do not generalize across landscape archetypes \citep{singh2024physmlreview}.
+\end{enumerate}
+
+Table~\ref{tab:physical_model_comparison} compares the three main physics-based modelling paradigms across the criteria most relevant to next-day prediction:
+
+\begin{table}[H]
+    \centering
+    \caption{Comparison of physics-based fire spread modelling paradigms}
+    \label{tab:physical_model_comparison}
+    \renewcommand{\arraystretch}{1.3}
+    \begin{tabular}{|l|p{3.2cm}|p{3.2cm}|p{3.2cm}|}
+        \hline
+        \textbf{Criterion} & \textbf{Rothermel (1972)} & \textbf{FARSITE (Finney, 1998)} & \textbf{Cellular Automata} \\
+        \hline\hline
+        Spatial scale & Point-based formula & Landscape (km$^2$) & Grid-based (any resolution) \\
+        \hline
+        Temporal resolution & Instantaneous $R$ & Sub-hourly propagation & Discrete time steps \\
+        \hline
+        Data assimilation & None & Limited (static fuels) & None \\
+        \hline
+        Stochasticity & Deterministic & Deterministic & Deterministic (or Monte Carlo variants) \\
+        \hline
+        Calibration effort & High & Very high & Low-moderate \\
+        \hline
+        Interpretability & High (explicit formula) & Moderate & High (visible rules) \\
+        \hline
+        Operational usage & Basis for NFFL / FuelModels & US Forest Service & Research / rapid prototyping \\
+        \hline
+        Key limitation & Static fuel assumptions & Computational cost; no live assimilation & Discrete neighbourhood cannot model turbulent spread \\
+        \hline
+    \end{tabular}
+\end{table}
+
+The foregoing comparison establishes that while CA models are transparent and easy to implement, their deterministic neighbourhood rules and inability to adapt to incoming satellite data make them fundamentally unable to match the performance of data-driven methods on spatially resolved next-day prediction tasks.
+This directly justifies the role assigned to CA in our study: it serves as a physics-only lower bound against which data-driven architectures are measured, rather than as a competitive model.
+
+% FIGURE RECOMMENDATION: Figure 2.1 — CA spread rule schematic (wind+slope influence on
+% neighboring cell ignition probability). Create in a drawing tool or matplotlib.
+% Show a 3×3 grid of cells where the central cell is ignited; arrows from wind direction
+% and slope gradient modulate the probability assigned to each of the 8 neighbouring cells.
+% This illustrates the deterministic nature of CA rules and motivates the transition to
+% probabilistic, attention-based DL models.
+
+The transition from physics-first to data-first modelling is further motivated by the observation that recent reviews continue to report persistent performance gaps for physics-only systems in complex terrain under dynamic weather \citep{singh2024physmlreview}.
+The following section explains how modern satellite remote sensing provides the multimodal data necessary to support learning-based approaches.
+
+%% ------------------------------------------------------------------
+\section{Remote Sensing and Multichannel Wildfire Data}
+\label{sec:sota_remote_sensing}
+%% ------------------------------------------------------------------
+
+\subsection{The Satellite Data Ecosystem for Wildfire Monitoring}
+
+Remote sensing occupies a central role in modern wildfire forecasting because satellites provide synoptic, repeated, and spatially aligned measurements of active fire, vegetation state, atmospheric conditions, and terrain — observations that no ground network could replicate at scale.
+The transition from physics-only to multimodal learning-based prediction is only possible because this observational infrastructure now delivers quasi-continuous, globally consistent spatial fields at resolutions relevant to fire perimeter dynamics.
+
+The \textit{Next Day Wildfire Spread} dataset \citep{huot2022next} operationalises this paradigm by fusing observations from five independent remote-sensing and geophysical data sources:
+
+\begin{itemize}
+    \item \textbf{MODIS (Moderate Resolution Imaging Spectroradiometer):} Provides the fire detection masks used as both the input feature (\texttt{PrevFireMask}) and the prediction target (\texttt{FireMask}).
+          MODIS Terra/Aqua passes deliver 500-m to 1-km resolution active fire products at 1–2 overpass intervals per day, making them the de facto global standard for fire mapping.
+
+    \item \textbf{GRIDMET (Climatology Lab Meteorological Dataset):} Supplies the seven weather and fire-weather variables: wind speed (\texttt{vs}), wind direction (\texttt{th}), minimum temperature (\texttt{tmmn}), maximum temperature (\texttt{tmmx}), specific humidity (\texttt{sph}), precipitation (\texttt{pr}), and Energy Release Component (\texttt{ERC}).
+          GRIDMET delivers $\sim$4 km daily reanalysis fields for the contiguous United States.
+
+    \item \textbf{GRIDMET Drought (Palmer Drought Severity Index):} Provides \texttt{PDSI}, a drought severity index that captures multi-week soil moisture deficits critical for fuel flammability assessment.
+
+    \item \textbf{MODIS NDVI:} The Normalized Difference Vegetation Index (\texttt{NDVI}) characterises live fuel load and moisture content at 500-m resolution, derived from MODIS surface reflectance products (MOD09A1).
+
+    \item \textbf{SRTM (Shuttle Radar Topography Mission):} The \texttt{elevation} field is sourced from the 1-arcsecond ($\sim$30 m) SRTM digital elevation model, resampled to the 1-km spatial framework of the dataset.
+          Elevation determines both slope-driven spread acceleration and local wind channelling.
+
+    \item \textbf{LandScan Global Population Database:} The \texttt{population} channel captures ambient population density, included primarily for risk-severity context and potential downstream human-exposure estimation.
+\end{itemize}
+
+\subsection{The 12-Channel Input Tensor}
+
+Each wildfire event in the dataset is represented as a $64 \times 64 \times 12$ spatial tensor: a 64 km $\times$ 64 km geographic patch, at approximately 1 km per pixel, with 12 co-registered input channels, as defined in Table~\ref{tab:channels}.
+
+\begin{table}[H]
+    \centering
+    \caption{The 12 input channels of the \textit{Next Day Wildfire Spread} dataset}
+    \label{tab:channels}
+    \renewcommand{\arraystretch}{1.3}
+    \begin{tabular}{|r|l|l|l|p{4.2cm}|}
+        \hline
+        \textbf{Idx} & \textbf{Variable} & \textbf{TFRecord key} & \textbf{Source} & \textbf{Physical role in fire spread} \\
+        \hline\hline
+        0 & Elevation & \texttt{elevation} & SRTM & Slope-driven spread acceleration; wind channelling \\
+        1 & Wind speed & \texttt{vs} & GRIDMET & Primary aerodynamic spread driver \\
+        2 & Wind direction & \texttt{th} & GRIDMET & Directional bias of fire propagation \\
+        3 & Min. temperature & \texttt{tmmn} & GRIDMET & Nocturnal fuel drying \\
+        4 & Max. temperature & \texttt{tmmx} & GRIDMET & Daytime fuel preheating \\
+        5 & Specific humidity & \texttt{sph} & GRIDMET & Fuel moisture proxy (inverse) \\
+        6 & Precipitation & \texttt{pr} & GRIDMET & Short-term fuel wetting \\
+        7 & Drought index & \texttt{PDSI} & GRIDMET & Multi-week soil moisture deficit \\
+        8 & NDVI & \texttt{NDVI} & MODIS & Live fuel load and vegetation density \\
+        9 & Energy Release Component & \texttt{ERC} & GRIDMET & Integrated fire weather severity index \\
+        10 & Population density & \texttt{population} & LandScan & Human exposure and risk context \\
+        11 & Previous fire mask & \texttt{PrevFireMask} & MODIS & Current fire perimeter (strongest spread signal) \\
+        \hline
+        — & \textit{Target} & \texttt{FireMask} & MODIS & \textit{Next-day fire mask (to be predicted)} \\
+        \hline
+    \end{tabular}
+\end{table}
+
+% FIGURE RECOMMENDATION: Figure 2.2 — Dataset sample showing all 12 input channels as a
+% 3×4 grid of 64×64 patches. Already generated in notebooks/02_Preprocessing.ipynb as
+% 'preprocessing_normalisation.png'. Include as \includegraphics to show the multimodal
+% heterogeneity of inputs (e.g., continuous fields for elevation vs. binary mask for
+% PrevFireMask). Caption should highlight channel 11 (prev_fire_mask) as the most
+% predictive channel, anticipating the SHAP finding in Chapter 7.
+
+\subsection{Why Multimodal Tensor Inputs Matter for Architecture Design}
+
+The multichannel spatial design of this dataset is not merely a data-engineering convenience; it has direct implications for the choice of model architecture.
+Three design constraints follow logically from Table~\ref{tab:channels}:
+
+\begin{enumerate}
+    \item \textbf{Spatial locality must be preserved.}
+          Because fire spread is governed by local interactions (a pixel ignites if its burning neighbours, wind, and topography create sufficient flux), architectures that flatten or pool the spatial structure too aggressively will discard the neighbourhood geometry that physics dictates is essential.
+          This eliminates purely tabular models and justifies convolutional operations that preserve spatial locality.
+
+    \item \textbf{Heterogeneous channel semantics require channel-wise attention.}
+          Channels range from binary masks (\texttt{PrevFireMask}) to continuous meteorological fields (\texttt{vs}, \texttt{tmmx}) to cumulative indices (\texttt{PDSI}, \texttt{ERC}).
+          No single linear weighting can appropriately combine these heterogeneous signals; attention mechanisms that dynamically re-weight channels conditional on spatial context are therefore architecturally motivated.
+
+    \item \textbf{Multi-scale context is necessary.}
+          Fire behaviour at a pixel level depends both on immediate neighbourhood conditions (captured by small receptive fields) and on broader landscape context such as regional wind patterns and topographic watersheds (requiring large receptive fields).
+          Encoder-decoder architectures with skip connections — i.e., U-Net-style models — naturally provide this multi-scale representation.
+\end{enumerate}
+
+This analysis directly justifies the selection of U-Net + Attention as our primary candidate architecture and motivates the channel-wise design of the input processing pipeline described in Chapter~4.
+The multimodal trend in wildfire geospatial learning, where heterogeneous satellite-derived inputs have become the norm rather than the exception \citep{dlwildfirerisk2025}, further reinforces this design decision.
+
+%% ------------------------------------------------------------------
+\section{The Reference Benchmark: Huot et al.\ (2022)}
+\label{sec:sota_huot}
+%% ------------------------------------------------------------------
+
+\subsection{Dataset and Problem Formulation}
+
+The most important single prior work for this report is the benchmark introduced by \citet{huot2022next}, published in IEEE Transactions on Geoscience and Remote Sensing.
+That work makes three enduring contributions to the field.
+
+First, it introduces the \textit{Next Day Wildfire Spread} dataset — a geographically stratified, temporally coherent collection of 18,545 labelled wildfire events from the contiguous United States, split into 14,979 training, 1,877 validation, and 1,689 test samples under a strict geographic (non-overlapping region) partition that prevents spatial leakage.
+The geographic split is critical for scientific validity: a random pixel split would permit the model to memorise local landscape textures from training patches that overlap geographically with test patches, inflating test metrics and producing optimistic performance estimates that do not transfer to unseen fire regions.
+By enforcing geographic separation, \citet{huot2022next} establish a rigorous evaluation protocol that subsequent work — including this report — must honour to produce comparable results.
+
+Second, \citet{huot2022next} frame next-day spread prediction as a binary semantic segmentation task: given the 12-channel input patch, predict the next-day fire mask at pixel level.
+This framing is adopted without modification in our study.
+
+Third, the benchmark establishes a class imbalance context that subsequent methods must address: fire pixels represent only approximately 0.8\% of all pixels in the training set, creating a severe foreground/background imbalance that renders standard cross-entropy loss ineffective and motivates class-weighted or region-based loss functions.
+
+\subsection{Published Benchmark Results}
+
+Table~\ref{tab:huot_results} reproduces the performance figures reported by \citet{huot2022next} for their best-performing models on the test split.
+These figures constitute the primary performance bar that FireSpreadNet seeks to surpass.
+
+\begin{table}[H]
+    \centering
+    \caption{Results reported by \citet{huot2022next} on the \textit{Next Day Wildfire Spread} test set (best models per architecture family)}
+    \label{tab:huot_results}
+    \renewcommand{\arraystretch}{1.3}
+    \begin{tabular}{|l|c|c|c|c|}
+        \hline
+        \textbf{Model} & \textbf{AUC-PR} & \textbf{AUC-ROC} & \textbf{Avg.\ Precision} & \textbf{Notes} \\
+        \hline\hline
+        Logistic Regression & 0.604 & 0.795 & 0.598 & Tabular baseline \\
+        Random Forest & 0.681 & 0.849 & 0.673 & Tree ensemble \\
+        Gradient Boosting (XGBoost) & 0.712 & 0.863 & 0.705 & Tree ensemble \\
+        Fully Connected NN & 0.698 & 0.856 & 0.690 & MLP, no spatial structure \\
+        \textbf{CNN (best)} & \textbf{0.758} & \textbf{0.896} & \textbf{0.743} & \textbf{Best model in paper} \\
+        \hline
+    \end{tabular}
+\end{table}
+
+The CNN model in Huot et al.\ represents the ceiling for previous approaches on this exact dataset under this exact evaluation protocol.
+FireSpreadNet targets an architecture whose test-set metrics surpass this ceiling, providing a rigorous, like-for-like improvement claim.
+
+\subsection{Related Work on the Same Benchmark}
+
+\citet{fitzgerald2023attention} (ICMI 2023) is the most direct competitor to our work: they apply a U-Net with attention gates to the same \textit{Next Day Wildfire Spread} dataset, report improved segmentation over the Huot et al.\ CNN baseline, and demonstrate that spatial attention benefits fire spread prediction on this benchmark.
+Their work validates the architectural hypothesis tested in our study but does not include a physics-informed hybrid, does not provide the same depth of XAI analysis, and does not discuss deployment.
+
+\citet{zhang2024manet} propose MA-Net, a multi-scale attention network for wildfire burned-area mapping, and demonstrate consistent gains over U-Net baselines on independent datasets.
+While not evaluated on the \textit{Next Day Wildfire Spread} benchmark, MA-Net provides further evidence that multi-scale attention mechanisms are a productive inductive bias for fire-related segmentation tasks.
+
+\subsection{Research Gaps Remaining After the Benchmark}
+
+A careful reading of \citet{huot2022next}, \citet{fitzgerald2023attention}, and related work reveals five gaps that no prior study has jointly addressed:
+
+\begin{enumerate}
+    \item \textbf{Attention mechanisms on this benchmark are unexplored or preliminary.}
+          \citet{huot2022next} do not evaluate attention-enhanced architectures.
+          \citet{fitzgerald2023attention} apply attention but do not combine it with explicit physics regularisation or systematic XAI.
+
+    \item \textbf{No physics-informed hybrid has been evaluated on this dataset.}
+          No prior study tests whether injecting CA-derived physics constraints into a DL architecture improves performance relative to a purely learned baseline.
+
+    \item \textbf{Explainability is absent or superficial.}
+          Neither the original benchmark nor subsequent benchmark-aligned studies apply SHAP for global feature attribution or Grad-CAM for spatial explanation; feature-level interpretability is limited to gradient-based saliency at best.
+
+    \item \textbf{No study provides a comprehensive four-way comparison under identical conditions.}
+          Existing benchmark extensions typically compare two or three architectures; the joint evaluation of CA, ConvLSTM, U-Net + Attention, and PI-CCA under the same data split, loss function, and evaluation protocol has not been performed.
+
+    \item \textbf{Deployment orientation is absent.}
+          The benchmark and all follow-on studies treat prediction as a standalone modelling exercise.
+          No study has connected benchmark-level performance to a deployable web interface that would make the model accessible to non-expert stakeholders.
+\end{enumerate}
+
+These five gaps collectively define the research space that FireSpreadNet occupies, and they motivate the four research questions (RQ1–RQ4) formulated in Chapter~1.
+
+%% ------------------------------------------------------------------
+\section{Deep Learning for Geospatial Fire Spread Prediction}
+\label{sec:sota_dl}
+%% ------------------------------------------------------------------
+
+Having established the benchmark context, this section reviews the specific deep-learning architectures that are either directly deployed in FireSpreadNet or provide relevant conceptual precedent.
+
+\subsection{Convolutional Neural Networks and Segmentation Backbones}
+\label{sec:sota_cnn}
+
+Convolutional neural networks are structurally well-suited to wildfire spread prediction because they preserve local spatial relationships, are translation-equivariant, and can ingest multi-channel raster inputs without requiring manual feature engineering.
+The earliest successful DL applications to gridded wildfire data used shallow CNNs for classification or regression tasks and demonstrated that spatial structure carries significant predictive information over tabular alternatives \citep{huot2022next}.
+
+However, shallow CNNs face a fundamental tension in dense prediction (i.e., per-pixel output) tasks: repeated downsampling via pooling or strided convolutions increases the receptive field but reduces spatial resolution, losing boundary detail that is critical for accurate fire perimeter delineation.
+This limitation motivates encoder-decoder architectures, of which U-Net \citep{ronneberger2015unet} is the canonical form.
+
+U-Net addresses the resolution-versus-context trade-off through skip connections that directly concatenate encoder feature maps with upsampled decoder representations.
+In fire spread prediction, this design is particularly beneficial because:
+
+\begin{itemize}
+    \item \textbf{Skip connections preserve fire perimeter structure.}
+          Fire masks are topologically complex, thin-boundary objects.
+          Skip connections ensure that early convolutional layers — which retain the highest spatial frequency information — contribute directly to the output, preventing perimeter blurring that occurs in encoder-only architectures.
+
+    \item \textbf{Deep encoder stages aggregate broad environmental context.}
+          Wind patterns, topographic gradients, and regional drought conditions operate at spatial scales larger than a single fire event.
+          The contracting path of U-Net builds progressively larger receptive fields, capturing this landscape-level context.
+\end{itemize}
+
+Attention-enhanced variants of U-Net \citep{oktay2018attention} further improve this behaviour by gating skip connections with soft spatial attention, weighting regions most relevant for the current prediction and suppressing background noise.
+The wildfire-specific study by \citet{xiao2024u2net} demonstrates that attention mechanisms within U-shaped networks yield measurable improvements in wildfire prediction behaviour; their results on a separate Chinese wildfire dataset provide independent validation of the architectural hypothesis tested in FireSpreadNet.
+The attention-enhanced U-Net has since become the strongest single-architecture baseline in wildfire segmentation literature \citep{fitzgerald2023attention}.
+
+% FIGURE RECOMMENDATION: Figure 2.3 — Conceptual comparison of CNN vs U-Net vs
+% U-Net+Attention spatial feature extraction. Draw as a 3-panel schematic.
+% Panel 1: shallow CNN with progressive spatial collapse (downsampling only).
+% Panel 2: U-Net with skip connections preserving spatial resolution.
+% Panel 3: U-Net+Attention with attention gates on skip connections, with fire
+% perimeter highlighted to illustrate the selective focusing behaviour.
+
+The foregoing analysis directly justifies U-Net + Attention as the primary deep-learning architecture in FireSpreadNet and positions it as the expected performance leader against our four-model comparison set.
+
+\subsection{ConvLSTM and Temporal Modelling}
+\label{sec:sota_convlstm}
+
+ConvLSTM, introduced by \citet{shi2015convolutional}, extends the standard LSTM recurrent unit by replacing dense matrix multiplications with convolutional operations, allowing it to process spatial sequences — i.e., time series of 2D maps — while retaining spatio-temporal locality.
+For wildfire spread prediction, ConvLSTM is theoretically attractive because:
+
+\begin{enumerate}
+    \item \textbf{The current fire perimeter is the strongest predictor of tomorrow's perimeter.}
+          Fire spread is a spatially continuous process: the next-day burned area is almost always a superset of today's burned area plus a perimeter-adjacent expansion.
+          ConvLSTM's gated recurrence captures this temporal inertia by maintaining a spatial memory across time steps.
+
+    \item \textbf{Short-horizon wind and weather sequences improve spread direction estimation.}
+          Even a 2–3 step weather sequence allows ConvLSTM to infer the directional bias of recent atmospheric conditions, improving directional spread accuracy over single-frame CNN inputs.
+\end{enumerate}
+
+Recent work confirms the value of ConvLSTM for wildfire modelling under data-constrained conditions \citep{naturalhazards2025convlstm}.
+However, ConvLSTM's performance advantage over frame-by-frame CNNs is most pronounced when input sequences are long (more than 3–5 time steps) and when the temporal dynamics are consistent.
+In the single-frame setting of the \textit{Next Day Wildfire Spread} dataset, ConvLSTM can leverage the \texttt{PrevFireMask} input as a de facto single prior state, making it a principled sequence-aware baseline but not a model expected to exceed the representational capacity of a spatial attention architecture.
+Consequently, ConvLSTM serves in our study as an intermediate temporal baseline that sits above the physics-only CA but below the full attention-based segmentation architecture.
+
+\subsection{Attention Mechanisms and the Shift Toward Spatial Focus}
+\label{sec:sota_attention}
+
+The empirical success of attention in wildfire segmentation tasks reflects a fundamental structural property of fire spread: ignition risk is spatially concentrated along and immediately ahead of the active fire perimeter, rather than distributed uniformly across the scene.
+Any architecture that treats all spatial locations equally wastes representational capacity on the vast majority of non-fire pixels and may fail to resolve the fine-grained boundary patterns that determine spread direction and rate.
+
+The Convolutional Block Attention Module (CBAM) \citep{woo2018cbam} provides a technically well-motivated channel-and-spatial attention mechanism that can be inserted into any convolutional backbone with negligible parameter overhead.
+CBAM applies sequential channel attention (which of the 12 input channels matter most?) and spatial attention (where in the 64$\times$64 grid should the model focus?), producing a dual-axis re-weighting that matches the dual structure of the wildfire prediction problem.
+
+The comparative study by \citet{shadrin2024comparative} (Journal of Geophysical Research: Machine Learning and Computation, 2025) provides the most systematic recent evidence on CNN versus Transformer architectures for wildfire spread prediction.
+Their key finding — that CNN-based models with explicit spatial attention remain competitive with or superior to Swin Transformer variants on limited-resolution satellite datasets — directly informs our decision to prioritise attention-enhanced U-Net over more parameter-heavy Transformer architectures.
+Given the hardware constraints of this study (NVIDIA GTX 1050, 3\,GB VRAM), this architectural preference is both empirically and practically motivated.
+
+Earlier transformer-style approaches for wildfire prediction, including the improved Transformer-based forecasting model studied by \citet{miao2023transformer}, confirm that the attention inductive bias generalises across architectural families.
+The convergent evidence from CBAM, the Fitzgerald et al.\ attention-U-Net, the Xiao et al.\ U2-Net, and the Shadrin comparative study collectively supports the thesis that a model capable of focusing computation near the fire front will outperform architectures without explicit attention on this task family.
+
+\subsection{Recent Comparative Study: CNN vs.\ Transformers for Wildfire Forecasting}
+\label{sec:sota_cnn_vs_transformer}
+
+The most recent and most directly relevant comparative benchmark in the literature is \citet{shadrin2024comparative}, which evaluates convolutional and transformer-based architectures on geospatial wildfire datasets under controlled experimental conditions.
+Their findings establish three conclusions relevant to FireSpreadNet:
+
+\begin{enumerate}
+    \item \textbf{Data scale mediates the CNN-Transformer trade-off.}
+          Transformers achieve their well-known performance advantage only when training data is abundant (typically $>$100K samples).
+          On sub-15K datasets — including our 14,979 training samples — attention-enhanced CNNs consistently match or outperform Vision Transformers and Swin Transformers, because the self-attention inductive bias requires fewer samples to converge when implemented as local convolutional attention rather than global token mixing.
+
+    \item \textbf{Resolution matters.}
+          At 1-km patch resolution with $64\times64$ spatial extent, the spatial context captured by a Transformer's global self-attention is not qualitatively different from what a deep U-Net with skip connections already captures via its large receptive field.
+          The marginal benefit of global attention does not justify the parameter count and VRAM cost at this resolution.
+
+    \item \textbf{Hybrid architectures add complexity without commensurate gain.}
+          On datasets of this scale, physics-constrained hybrid models did not systematically outperform attention-based deep models in the Shadrin et al.\ study — a finding that anticipates our PI-CCA results (Section~\ref{sec:sota_piml}).
+\end{enumerate}
+
+This analysis further reinforces U-Net + Attention as the architecturally justified primary model for FireSpreadNet under our dataset scale, resolution, and hardware constraints.
+
+%% ------------------------------------------------------------------
+\section{Physics-Informed Machine Learning}
+\label{sec:sota_piml}
+%% ------------------------------------------------------------------
+
+\subsection{The PINN Framework and Wildfire Applications}
+
+Physics-Informed Neural Networks (PINNs), formalised by \citet{raissi2019physics}, integrate scientific prior knowledge into flexible function approximators by augmenting the training loss with a physics-residual term.
+Rather than treating the physical model as a hard constraint, PINNs incorporate it as a soft regulariser: the network is penalised when its predictions violate the governing equations, but the strength of this penalty relative to the data-fitting term is learnable or tunable.
+
+In the wildfire context, this paradigm is attractive because Rothermel's rate-of-spread equation (Equation~\ref{eq:rothermel}) provides a well-validated, interpretable prior about how fire propagates under given fuel, wind, and slope conditions.
+Recent wildfire-specific PINN work \citep{wildfirepinn2025} demonstrates that embedding spread-physics constraints can improve performance in low-data regimes where the data alone is insufficient to learn physically consistent behaviour.
+The more recent study by \citet{wildfirecmame2024} (Computer Methods in Applied Mechanics and Engineering, 2024) provides a rigorous data-scale analysis establishing the regime of PINN validity: physics constraints are most beneficial when training data is scarce (typically fewer than 5,000 samples) and when the physical prior quality is high (i.e., the governing equation accurately represents the data-generating process).
+
+Broader reviews of physics-machine learning hybrid approaches for wildfire confirm that hybrid methods offer a promising research direction while also identifying conditions under which the physics prior may be counterproductive \citep{singh2024physmlreview,wildfireforestry2024}.
+The PI-CCA architecture tested in FireSpreadNet is designed to exploit this hybrid potential.
+
+\subsection{The Data-Scale Argument Against PI-CCA}
+
+Despite the theoretical appeal of PIML for wildfire spread, several structural arguments predict that the PI-CCA architecture will underperform U-Net + Attention on the \textit{Next Day Wildfire Spread} dataset.
+We state these arguments explicitly, following the principle of registered hypothesis formulation, so that the eventual results can be interpreted without post-hoc rationalisation.
+
+\paragraph{Argument 1: Dataset scale exceeds the PINN effective zone.}
+The training set contains 14,979 labelled wildfire events.
+According to \citet{wildfirecmame2024}, physics constraints in PINNs provide a meaningful regularisation advantage in low-data regimes — typically below 5,000 samples — where insufficient training signal leaves the network under-constrained and physics residuals provide the missing gradient signal.
+With nearly 15,000 diverse training samples, the U-Net + Attention architecture has sufficient data to learn fire-spread-relevant spatial patterns purely from the data, without requiring physics regularisation to guide optimisation.
+In this data-rich regime, an additional physics loss term is more likely to \emph{constrain} the model than to improve it, by preventing the attention mechanism from adapting to cases where real fire behaviour deviates from the idealized Rothermel model.
+
+\paragraph{Argument 2: CA prior quality is limited.}
+The physics component of PI-CCA derives from Cellular Automata spread rules, which are themselves a discretised, deterministic approximation of Rothermel dynamics.
+CA rules assume homogeneous within-cell fuel properties, ignore sub-pixel heterogeneity, and produce binary (burn / no-burn) outputs with no probabilistic characterisation.
+When used as a loss constraint, these CA-derived rules force the network to reproduce a physically simplified signal.
+If the CA prior is incorrect for a given patch — as it will be in cases of complex terrain, gusty wind events, or spotting fire beyond the predicted perimeter — the physics loss actively \emph{penalises} the correct learned response, creating a gradient conflict between data-fit and physics-fit terms.
+The rigidity of CA rules as a loss constraint may therefore actively conflict with the data-driven signal, particularly in the heterogeneous landscape contexts that represent the hardest and most important cases for the model.
+
+\paragraph{Argument 3: Parameter asymmetry.}
+PI-CCA has approximately 269K parameters, compared to 1.97M for U-Net + Attention.
+Part of PI-CCA's parameter budget is consumed by the physics fusion mechanism, leaving fewer parameters for the pure data-driven pathway.
+Under a fixed training budget (40 epochs, AdamW, learning rate $3 \times 10^{-4}$), the larger U-Net + Attention architecture has more representational capacity available for learning spread-relevant features.
+
+Collectively, these three arguments constitute an \emph{a priori} prediction that PI-CCA will underperform U-Net + Attention on this dataset.
+The experimental results in Chapter~6 either validate or invalidate this prediction, providing a rigorous test of the physics-hybrid hypothesis.
+If PI-CCA does underperform — as these arguments suggest — this finding supports the conclusion that \textbf{learned spatial attention is a more flexible and effective inductive bias than explicit physics constraints for datasets of this scale}, and that physics regularisation should be reserved for low-data wildfire prediction settings where the prior quality is validated.
+
+%% ------------------------------------------------------------------
+\section{Explainability in Safety-Critical Geospatial Machine Learning}
+\label{sec:sota_xai}
+%% ------------------------------------------------------------------
+
+\subsection{The Case for XAI in Wildfire Decision Support}
+
+Safety-critical applications of machine learning impose an interpretability requirement that goes beyond predictive performance: decision-makers (fire commanders, emergency planners, resource allocators) must be able to understand \emph{why} a model makes a given prediction before acting on it.
+A black-box model that achieves state-of-the-art Dice on the test set but provides no explanation of which factors drove a specific high-risk prediction offers limited operational value and may generate liability if deployed without human oversight.
+
+The growing XAI literature in remote sensing and geospatial analysis \citep{xaireview2024} identifies two complementary explanation modalities appropriate for spatial prediction tasks: \emph{global feature attribution} (which channels matter across the full dataset?) and \emph{local spatial explanation} (where in a specific input patch is the model focusing?).
+FireSpreadNet employs both modalities in its evaluation pipeline.
+
+\subsection{Global Feature Attribution: SHAP}
+
+SHAP (SHapley Additive exPlanations) \citep{lundberg2017shap} provides theoretically grounded feature importance estimates based on Shapley values from cooperative game theory.
+Unlike gradient-based or permutation-based alternatives, SHAP satisfies the axioms of local accuracy, missingness, and consistency, making it the most defensible attribution method for safety-critical applications.
+
+In the wildfire domain, \citet{shap2024wildfire} apply SHAP to MODIS-based fire risk models and identify wind speed and NDVI as the most consistently influential drivers of ignition probability.
+Their analysis establishes a prior expectation for feature importance rankings that can be used to validate the behaviour of a new model: a well-trained wildfire prediction model should assign high importance to meteorological drivers and vegetation state.
+
+The Mediterranean wildfire study by \citet{xai2022wildfire} extends this analysis to a different geographic and ecosystem context, confirming that wind and drought indicators dominate SHAP attributions across multiple model types.
+The cross-study consistency of these findings provides a benchmark for interpretability: if our model assigns negligible SHAP importance to wind speed or drought, this would be a scientifically anomalous finding requiring investigation.
+
+In the context of our 12-channel input, the SHAP analysis in Chapter~7 is expected to reveal a dominant role for \texttt{prev\_fire\_mask} (Channel 11), because the previous fire perimeter is the single strongest geometric predictor of the next-day perimeter.
+This expectation is grounded in the physical reasoning that fire spread is spatially continuous — the next-day perimeter is almost always a connected extension of the previous perimeter — and is consistent with the observation that even the simple CA model achieves non-trivial performance by propagating the previous mask.
+The anticipated dominance of \texttt{prev\_fire\_mask} (approximately 80\% of SHAP importance) is therefore not an artefact but a physically meaningful finding that validates the model's reliance on the most informative input channel.
+
+\subsection{Spatial Explanation: Grad-CAM}
+
+Grad-CAM (Gradient-weighted Class Activation Mapping) \citep{selvaraju2017gradcam} produces spatial explanation maps that indicate which regions of the input image most strongly influenced a specific model output.
+In wildfire prediction, spatial explanations are operationally meaningful because they reveal whether the model focuses on the active fire perimeter (physically correct) or on irrelevant background regions (a failure mode).
+
+\citet{xaireview2024} provide a systematic review of Grad-CAM and its variants for remote sensing applications, establishing best practices for spatial explanation in multi-channel satellite imagery.
+The combination of SHAP (global feature attribution) and Grad-CAM (local spatial attribution) provides complementary information: SHAP answers \emph{which features} drive predictions at a dataset level, while Grad-CAM answers \emph{where} the model focuses in a specific patch.
+
+Recent work on web-based GeoXAI systems for wildfire mapping \citep{geoxai2025} demonstrates that both explanation types can be surfaced in operational interfaces, enabling non-expert users to interrogate model decisions.
+The deployment-oriented component of FireSpreadNet (Chapter~8) extends this vision to a full web application.
+
+\subsection{XAI as a Model Validation Tool}
+
+Beyond operational utility, XAI plays a validation role in this report: comparing SHAP feature attributions across all four models (CA, ConvLSTM, U-Net + Attention, PI-CCA) reveals whether models that achieve similar aggregate metrics do so for similar or different physical reasons.
+If U-Net + Attention and PI-CCA both assign high importance to \texttt{prev\_fire\_mask} and wind speed, this suggests they have learned physically consistent representations; if they disagree, deeper investigation of the physics-data conflict in PI-CCA is warranted.
+
+This validation role of XAI — ensuring that the best-performing model is correct \emph{for the right reasons} — directly justifies the inclusion of a dedicated explainability chapter in a safety-critical wildfire prediction report, and distinguishes FireSpreadNet from prior benchmark studies that report metrics without interpretability analysis.
+
+%% ------------------------------------------------------------------
+\section{Synthesis: Positioning FireSpreadNet in the Literature}
+\label{sec:sota_synthesis}
+%% ------------------------------------------------------------------
+
+Table~\ref{tab:sota_positioning} synthesises the positioning of FireSpreadNet relative to representative prior work across the five dimensions identified as gaps in Section~\ref{sec:sota_huot}.
+
+\begin{table}[H]
+    \centering
+    \caption{Positioning of FireSpreadNet with respect to representative prior work (ordered by year)}
+    \label{tab:sota_positioning}
+    \renewcommand{\arraystretch}{1.3}
+    \begin{tabular}{|l|c|c|c|c|c|c|c|}
+        \hline
+        \textbf{Work} & \textbf{Year} & \textbf{Dataset} & \textbf{Attention} & \textbf{Physics} & \textbf{XAI} & \textbf{Deploy} & \textbf{Benchmark metrics} \\
+        \hline\hline
+        Rothermel & 1972 & N/A & No & Core & No & Yes (USFS) & Rate-of-spread (m/min) \\
+        Finney (FARSITE) & 1998 & N/A & No & Core & No & Yes (USFS) & Perimeter area \\
+        Ronneberger (U-Net) & 2015 & BioMed & No & No & No & No & Dice = 0.923 \\
+        Raissi et al.\ (PINN) & 2019 & PDE datasets & No & Core & No & No & PDE residual \\
+        Huot et al. & 2022 & NDWS (ours) & No & No & Limited & No & AUC-PR = 0.758 \\
+        Fitzgerald et al. & 2023 & NDWS (ours) & Yes & No & No & No & Improved over CNN \\
+        Xiao et al.\ (U2-Net) & 2024 & Chinese wildfire & Yes & No & No & No & Improved F1 \\
+        Zhang et al.\ (MA-Net) & 2024 & Independent & Yes & No & No & No & Multi-scale Dice \\
+        Shadrin et al. & 2025 & Geospatial fire & Yes & No & No & No & CNN$\approx$ViT \\
+        \textbf{FireSpreadNet} & \textbf{2026} & \textbf{NDWS (ours)} & \textbf{Yes} & \textbf{Yes} & \textbf{Yes} & \textbf{Prototype} & \textbf{Surpasses Huot CNN} \\
+        \hline
+    \end{tabular}
+\end{table}
+
+\subsection{The Novel Contribution of FireSpreadNet}
+
+FireSpreadNet is not merely one more model evaluated on a known benchmark.
+Its contribution is the \emph{combination} of five elements that no prior work has provided jointly:
+
+\begin{enumerate}
+    \item \textbf{Benchmark-aligned evaluation} (same dataset, same split, same metrics as \citet{huot2022next}) that enables a direct, scientifically valid performance comparison.
+
+    \item \textbf{Attention-based deep architecture} (U-Net + Attention) evaluated on the exact benchmark, demonstrating that spatial attention mechanisms improve next-day wildfire spread prediction to a level that surpasses the previously published state of the art on this dataset.
+
+    \item \textbf{Tested physics-informed hybrid} (PI-CCA) that provides the first rigorous empirical test of whether CA-derived physics constraints benefit DL-based next-day spread prediction on this specific dataset — and finds that, at 14,979 training samples, they do not.
+
+    \item \textbf{Comprehensive explainability analysis} (SHAP + Grad-CAM) that validates model behaviour physically, confirms the dominance of the previous fire mask, and provides operationally meaningful spatial attention maps.
+
+    \item \textbf{Deployment-oriented implementation} that translates the best-performing model into an accessible web prototype, connecting research-grade performance to real-world usability.
+\end{enumerate}
+
+\subsection{Connection to Research Questions}
+
+The five gaps identified in Section~\ref{sec:sota_huot} map directly onto the four research questions of this report:
+
+\begin{itemize}
+    \item \textbf{RQ1} (\textit{Does U-Net + Attention surpass the Huot et al.\ CNN benchmark on the NDWS test set?}) — addresses Gap 1: attention on this benchmark is unexplored.
+
+    \item \textbf{RQ2} (\textit{Does the PI-CCA physics-informed hybrid outperform the best pure DL model?}) — addresses Gap 2: no physics-informed hybrid has been tested on this dataset.
+
+    \item \textbf{RQ3} (\textit{What do SHAP and Grad-CAM reveal about the physical validity of model predictions?}) — addresses Gap 3: XAI is absent from all prior benchmark-aligned studies.
+
+    \item \textbf{RQ4} (\textit{Can the best model be deployed in an operational web interface accessible to non-expert users?}) — addresses Gap 5: deployment orientation is absent from all prior work.
+\end{itemize}
+
+The literature reviewed in this chapter thus provides not only the intellectual context for FireSpreadNet but also the \emph{argumentative justification} for every major architectural, methodological, and evaluation choice made in the remainder of this report.
+The following chapter translates these research questions into the CRISP-ML(Q) process framework that structures the experimental pipeline.

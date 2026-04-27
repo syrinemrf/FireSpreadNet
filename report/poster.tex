@@ -1,0 +1,316 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% FireSpreadNet – A0 Landscape Poster (single page)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\documentclass[a0,landscape]{a0poster}
+
+%----------------------------------------------------------------------------------------
+% PACKAGES
+%----------------------------------------------------------------------------------------
+\usepackage[svgnames]{xcolor}
+\usepackage{multicol}
+\columnsep=60pt
+\columnseprule=1.5pt
+\usepackage[absolute,overlay]{textpos}
+\usepackage{times}
+\usepackage{graphicx}
+\graphicspath{{figures/}{Images/}}
+\usepackage{booktabs}
+\usepackage[font=small,labelfont=bf]{caption}
+\usepackage{amsfonts, amsmath, amsthm, amssymb}
+\usepackage{url}
+\usepackage{tcolorbox}
+\tcbuselibrary{skins,breakable}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{enumitem}
+
+%----------------------------------------------------------------------------------------
+% COLOR PALETTE
+%----------------------------------------------------------------------------------------
+\definecolor{FireRed}{RGB}{180, 40, 20}
+\definecolor{FireOrange}{RGB}{220, 100, 20}
+\definecolor{SmokeGrey}{RGB}{90, 90, 90}
+\definecolor{AshLight}{RGB}{245, 240, 235}
+\definecolor{ForestGreen}{RGB}{34, 100, 45}
+\definecolor{DeepBlue}{RGB}{25, 60, 120}
+\definecolor{AlertYellow}{RGB}{255, 200, 0}
+\definecolor{LightGrey}{RGB}{230, 230, 230}
+
+%----------------------------------------------------------------------------------------
+% CUSTOM COMMANDS
+%----------------------------------------------------------------------------------------
+\newcommand{\sectitle}[1]{%
+  \par\noindent\colorbox{FireRed!15}{%
+    \parbox{\linewidth}{%
+      \vspace{0.12em}%
+      {\Large\bfseries\color{FireRed} \hspace{0.3em}#1}%
+      \vspace{0.12em}%
+    }%
+  }\par\vspace{0.1em}%
+}
+
+\newcommand{\subsectitle}[1]{%
+  \par\noindent{\large\bfseries\color{DeepBlue} #1}\par\vspace{0.1em}%
+}
+
+\newcommand{\keybox}[1]{%
+  \begin{tcolorbox}[
+    colback=FireRed!10,colframe=FireRed,
+    arc=3pt,boxrule=1pt,
+    left=4pt,right=4pt,top=3pt,bottom=3pt
+  ]{\small #1}\end{tcolorbox}%
+}
+
+\newcommand{\greenbox}[1]{%
+  \begin{tcolorbox}[
+    colback=ForestGreen!10,colframe=ForestGreen,
+    arc=3pt,boxrule=1pt,
+    left=4pt,right=4pt,top=3pt,bottom=3pt
+  ]{\small #1}\end{tcolorbox}%
+}
+
+\newcommand{\bluebox}[1]{%
+  \begin{tcolorbox}[
+    colback=DeepBlue!8,colframe=DeepBlue,
+    arc=3pt,boxrule=1pt,
+    left=4pt,right=4pt,top=3pt,bottom=3pt
+  ]{\small #1}\end{tcolorbox}%
+}
+
+\begin{document}
+\enlargethispage{200pt}
+
+%========================================================================================
+% HEADER
+%========================================================================================
+\begin{minipage}[b]{0.76\linewidth}
+  \begin{flushleft}
+    {\fontsize{72}{80}\selectfont\bfseries\color{FireRed} FireSpreadNet}\\[0.15cm]
+    {\LARGE\color{DeepBlue}\textit{Attention-Enhanced Deep Learning for Next-Day Wildfire Spread Prediction}}\\[0.12cm]
+    {\large\color{SmokeGrey}
+      Benchmark Study with Physics-Informed Hypothesis, Explainability (XAI), and Deployment}\\[0.15cm]
+    {\normalsize\color{SmokeGrey}
+      \textbf{Syrine Maaref \& Dorra Trabelsi}\quad|\quad
+      Supervisor: Ahmed Ben Taleb\quad|\quad ITBS}
+  \end{flushleft}
+\end{minipage}
+%
+\begin{textblock*}{12cm}(93cm,4cm)
+  \includegraphics[width=22cm]{logoitbs.png}
+\end{textblock*}
+
+\vspace{0.4cm}
+
+%========================================================================================
+% TOP FULL-WIDTH BLOCK: Motivation + Problem Statement
+%========================================================================================
+\noindent
+\begin{tcolorbox}[
+  enhanced,
+  colback=AshLight,
+  colframe=FireRed,
+  arc=5pt,
+  boxrule=2pt,
+  left=10pt, right=10pt, top=6pt, bottom=6pt,
+  title={\Large\bfseries\color{white} Motivation \& Problem Statement},
+  attach boxed title to top left={yshift=-2mm, xshift=8mm},
+  boxed title style={colback=FireRed, colframe=FireRed, arc=3pt}
+]
+\begin{minipage}[t]{0.54\linewidth}
+  \vspace{0pt}
+  {\small\color{SmokeGrey}%
+    Wildfires burned more than \textbf{420 million hectares} in 2023--2024, causing massive human and
+    ecological losses. Emergency response remains largely \textbf{reactive}: resources are deployed
+    \emph{after} ignition, limiting evacuation time and increasing risk.
+    Satellite imagery now provides daily multimodal observations at scale,
+    enabling data-driven models that are faster and more adaptive than traditional physical simulators,
+    yet still explainable enough to support expert decision-making.%
+  }
+\end{minipage}
+\hfill\vrule width 1.5pt\hfill
+\begin{minipage}[t]{0.42\linewidth}
+  \vspace{0pt}
+  \begin{tcolorbox}[
+    colback=DeepBlue!12, colframe=DeepBlue,
+    arc=4pt, boxrule=2pt,
+    left=6pt, right=6pt, top=5pt, bottom=5pt
+  ]
+  \begin{center}
+    {\large\bfseries\color{DeepBlue} Research Question}\\[0.3em]
+    {\normalsize\color{black}%
+      \textit{Can attention-based deep learning on multimodal satellite data}\\
+      \textit{reliably predict next-day wildfire spread, outperform physical baselines,}\\
+      \textit{and remain explainable enough for operational expert use?}%
+    }
+  \end{center}
+  \end{tcolorbox}
+\end{minipage}
+\end{tcolorbox}
+
+\vspace{0.35cm}
+
+%========================================================================================
+% THREE-COLUMN BODY
+%========================================================================================
+\begin{multicols}{3}
+\raggedcolumns
+\color{SmokeGrey}
+\small
+
+%----------------------------------------------------------------------
+% COLUMN 1 – Dataset
+%----------------------------------------------------------------------
+\sectitle{Dataset: Next-Day Wildfire Spread}
+
+\begin{itemize}[leftmargin=1.2em,itemsep=0.05em]
+  \item \textbf{18,545 patches}, 64$\times$64 px ($\approx$1 km/px) — continental USA.
+  \item \textbf{12 input channels}: fire history, weather (wind, humidity, temp., rain), drought (PDSI),
+        vegetation (NDVI, ERC), topography (elevation, slope), population density.
+  \item \textbf{Target}: binary next-day fire mask.
+  \item \textbf{Temporal split} (no leakage): 14,979 train / 1,877 val / 1,689 test.
+  \item \textbf{Class imbalance}: only \textbf{1.07\%} fire pixels.
+\end{itemize}
+
+\vspace{0.15em}
+\keybox{%
+  \textbf{Imbalance mitigation:}
+  Focal Loss ($\alpha=0.989$, derived analytically) at pixel level
+  + \texttt{WeightedRandomSampler} at sample level to over-represent fire patches.
+}
+
+\vspace{0.2em}
+\begin{center}
+  \includegraphics[width=0.88\linewidth]{Images/eda_sample_9804.png}\\[0.15em]
+  {\footnotesize\textbf{Figure 1.} Example 12-channel wildfire patch.}
+\end{center}
+
+\vspace{0.2em}
+\begin{center}
+  \includegraphics[width=0.88\linewidth]{Images/eda_split_comparison.png}\\[0.15em]
+  {\footnotesize\textbf{Figure 2.} Train / val / test split distribution.}
+\end{center}
+
+\columnbreak
+
+%----------------------------------------------------------------------
+% COLUMN 2 – Architecture
+%----------------------------------------------------------------------
+\sectitle{Architecture: U-Net + Attention (Best Model)}
+
+\vspace{0.1em}
+\bluebox{%
+  Four models were benchmarked under \textbf{identical conditions} (same split, optimizer AdamW,
+  Focal+Dice loss, seed). Only U-Net+Attention is detailed here as the top performer.
+}
+
+\vspace{0.2em}
+\subsectitle{U-Net with Attention Gates}
+
+The encoder--decoder backbone follows the U-Net design. \textbf{Attention gates} are inserted at each skip connection to suppress irrelevant spatial activations and focus the decoder on fire-prone regions:
+
+$$\boldsymbol{\alpha}^l \;=\;
+  \sigma\!\Bigl(\mathbf{W}_\psi\,
+    \mathrm{ReLU}\!\bigl(\mathbf{W}_x\mathbf{x}^l + \mathbf{W}_g\mathbf{g}^l + b\bigr)
+  + b_\psi\Bigr)$$
+
+where $\mathbf{x}^l$ is the skip-connection feature, $\mathbf{g}^l$ is the gating signal from the
+lower level, and $\boldsymbol{\alpha}^l\!\in(0,1)$ is the soft spatial mask applied before
+concatenation.
+
+\vspace{0.15em}
+\begin{center}
+  % FIGURE RECOMMENDATION: U-Net+Attention diagram (encoder, bottleneck, decoder, attention gates)
+  \includegraphics[width=0.88\linewidth]{Images/training_curves_local.png}\\[0.15em]
+  {\footnotesize\textbf{Figure 3.} Training / validation loss and Dice convergence.}
+\end{center}
+
+\vspace{0.15em}
+\begin{center}
+{\footnotesize
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{lcc}
+\toprule
+\textbf{Component} & \textbf{Detail} \\
+\midrule
+Backbone & U-Net (4 enc.\ levels) \\
+Skip connections & Attention-gated \\
+Parameters & $\sim$1.97M \\
+Loss & 0.5 Focal + 0.5 Dice \\
+Optimizer & AdamW, lr = 1e-4 \\
+Threshold $\tau^*$ & 0.90 (val-tuned) \\
+\bottomrule
+\end{tabular}
+}\end{center}
+
+\columnbreak
+
+%----------------------------------------------------------------------
+% COLUMN 3 – Results + XAI + Conclusion
+%----------------------------------------------------------------------
+\sectitle{Results}
+
+\begin{center}
+{\footnotesize
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Model} & \textbf{Dice}$\uparrow$ & \textbf{IoU}$\uparrow$ & \textbf{Recall}$\uparrow$ & \textbf{AUC-ROC}$\uparrow$ \\
+\midrule
+CA (physics)          & 0.3254 & 0.1943 & 0.4734 & -- \\
+ConvLSTM              & 0.3185 & 0.1894 & 0.4865 & -- \\
+PI-CCA                & 0.3240 & 0.1933 & 0.3767 & -- \\
+\textbf{U-Net+Attn}   & \textbf{0.4034} & \textbf{0.2526} & \textbf{0.5418} & \textbf{0.9415} \\
+\midrule
+Huot et al.\ (2022)   & 0.311  & --     & --     & 0.839 \\
+\bottomrule
+\end{tabular}
+}
+\end{center}
+
+\vspace{0.05em}
+\greenbox{%
+  \textbf{H1 confirmed:} U-Net+Attention achieves \textbf{Dice = 0.4034}, \textbf{IoU = 0.2526},
+  and \textbf{AUC-ROC = 0.9415} — outperforming all baselines and the Huot et al.\ (2022)
+  published benchmark.
+}
+\vspace{0.05em}
+\keybox{%
+  \textbf{Physics prior not validated:} PI-CCA shows lower recall than U-Net+Attention and
+  does not outperform it, suggesting the CA prior introduces more bias than benefit at this scale.
+}
+
+\vspace{0.15em}
+\sectitle{Explainability (XAI)}
+
+\begin{center}
+  \includegraphics[width=0.72\linewidth]{Images/shap_importance_unet.png}\\[0.1em]
+  {\footnotesize\textbf{Figure 4.} SHAP global feature importance (U-Net+Attention).}
+\end{center}
+
+\vspace{0.05em}
+\bluebox{%
+  \textbf{prev\_fire\_mask} (fire history) dominates SHAP importance ($\approx$80\%),
+  consistent with the physical persistence of fire perimeters.
+  Wind and drought indices rank next, confirming meteorological drivers.
+  Grad-CAM spatial maps reveal that attention gates concentrate on active-fire boundaries.
+}
+
+\vspace{0.15em}
+\sectitle{Deployment \& Conclusion}
+
+\textbf{Deployment:} Dockerized inference API + expert-facing web dashboard.
+Safety guardrails: probability output only, threshold under expert control, no autonomous alerts.
+
+\vspace{0.1em}
+\greenbox{%
+  \textbf{Conclusion:} U-Net+Attention with spatial attention gates reaches
+  \textbf{Dice = 0.4034 / IoU = 0.2526 / AUC-ROC = 0.9415},
+  beating physical simulators and prior deep-learning baselines.
+  SHAP \& Grad-CAM make predictions explainable.
+  \textit{Future work}: stronger physics priors, uncertainty quantification, multi-step horizon.
+}
+
+\end{multicols}
+
+\end{document}
